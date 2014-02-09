@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE indexer SYSTEM "videos.dtd">
+<?xml-stylesheet href="videos.html.xslt" type="text/xsl"?>
+
+<indexer	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+			xsi:noNamespaceSchemaLocation="videos.xsd"
+			gendate="2014-02-08"
+>
+	<index>
+		<layer name="Mathe 1">
+			<layer name="SoSe 2013" checkbox="true" videos="2" duration="1:22:33">
+				<vref id="1" title="Hallo Welt 1" />
+				<vref id="2" title="Hallo Welt 2" />
+			</layer>
+			<layer name="WiSe 2013/14" checkbox="false" duration="1:02:03">
+				<vref id="3" title="Hallo Welt 3" />
+			</layer>
+		</layer>
+		<layer name="Mathe 2" videos="1">
+			<vref id="4" title="Hallo Welt 4" />
+		</layer>
+		<layer name="Sonstiges" videos="0">
+		</layer>
+	</index>
+	
+	<videos latest="1">
+		<video id="1" url="http://video1/" date="2013-12-01" pubdate="2013-12-02" duration="13:37">
+			<file url="http://video1/file.avi" type="M4V"/>
+			<file url="http://video1/file.mpg" type="MPEG"/>
+		</video>
+		<video id="2" url="http://video2/" date="2013-12-02" pubdate="2013-12-03" duration="13:38">
+			<file url="http://video2/file.mpg" type="MPEG"/>
+		</video>
+		<video id="3" url="http://video3/" date="2013-12-03" pubdate="2013-12-04" duration="13:39">
+			
+		</video>
+		<video id="4" url="http://video4/" date="2013-12-04" pubdate="2013-12-05">
+			
+		</video>
+	</videos>
+
+</indexer>

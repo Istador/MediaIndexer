@@ -78,7 +78,7 @@ object Output {
                   (for (e <- tree(g)(d).toArray) yield {
                     <div>
                       <input type="checkbox" name={ e.title }/>
-                      <a href={ e.href } target="_blank">{ e.onlytitle }</a>
+                      <a href={ e.url } target="_blank">{ e.onlytitle }</a>
                       <span>({e.duration})</span>
                       <a href={ e.videolink + ".flv" } target="_blank">[flv]</a>
                       <a href={ e.videolink + ".m4v" } target="_blank">[mp4]</a>

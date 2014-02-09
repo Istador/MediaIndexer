@@ -1,6 +1,6 @@
 package de.blackpinguin.mediaindexer
 
-case class VideoLink(val title: String, val href: String, val duration: String) {
+case class VideoLink(val title: String, val url: String, val duration: String) {
   private lazy val split = title.split(" ")
   lazy val group = split(0)
   lazy val date = split(1)

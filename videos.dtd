@@ -1,0 +1,53 @@
+<!ELEMENT indexer (index, videos)>
+<!ATTLIST indexer
+	xmlns:xsi						CDATA #REQUIRED
+	xsi:noNamespaceSchemaLocation	CDATA #REQUIRED
+	gendate							CDATA #REQUIRED
+>
+
+
+
+<!ELEMENT index (layer*)>
+
+
+
+<!ELEMENT layer (layer* | vref*)>
+<!ATTLIST layer
+	name		CDATA #REQUIRED
+	checkbox	CDATA #IMPLIED
+	videos		CDATA #IMPLIED
+	duration	CDATA #IMPLIED
+>
+
+
+
+<!ELEMENT vref EMPTY>
+<!ATTLIST vref
+	id			CDATA #REQUIRED
+	title		CDATA #REQUIRED
+>
+
+
+<!ELEMENT videos (video*)>
+<!ATTLIST videos
+	latest		CDATA #IMPLIED
+>
+
+
+
+<!ELEMENT video (file*)>
+<!ATTLIST video
+	id			CDATA #REQUIRED
+	url			CDATA #REQUIRED
+	date		CDATA #REQUIRED
+	pubdate		CDATA #REQUIRED
+	duration	CDATA #IMPLIED
+>
+
+
+
+<!ELEMENT file EMPTY>
+<!ATTLIST file
+	url		CDATA #REQUIRED
+	type	CDATA #REQUIRED
+>

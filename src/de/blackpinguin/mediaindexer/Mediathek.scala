@@ -77,7 +77,7 @@ object Mediathek {
     println("hole Video " + vl.title)
 
     //HTTP-Request und umwandeln zu XML
-    val doc = HTTP.getXML(vl.href)
+    val doc = HTTP.getXML(vl.url)
 
     //Video-Link aus DOM-Struktur holen, und Dateiendung entfernen
     vl.videolink = domain + (((doc \\ "video")(0) \ "source")(0) \ "@src").text.split("\\.")(0)
