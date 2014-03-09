@@ -83,6 +83,7 @@
 		<xsd:attribute name="date" type="date" use="required" />
 		<xsd:attribute name="pubdate" type="date" use="required" />
 		<xsd:attribute name="duration" type="duration" use="optional" />
+		<xsd:attribute name="author" type="xsd:string" use="required" />
 	</xsd:complexType>
 </xsd:element>
 

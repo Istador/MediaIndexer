@@ -4,30 +4,32 @@ import scala.concurrent.duration.Duration
 
 
 
-case class VFile(url: String, typ:String)
+case class VFile(url: String, _typ:String){
+  lazy val typ:String = _typ.split("/")(1)
+}
 
 
 
 object Video {
   
-  private[this] var latestId:Int = XML.xpath("/indexer[1]/videos[1]/@latest").attr.toInt
+  import XML.doc
+  import de.blackpinguin.util.DOM.xpath
+  
+  def latest: Int = latestId
+  
+  private[this] var latestId:Int = xpath("/indexer[1]/videos[1]/@latest").attr.toInt
   
   private[Video] def getID(url:String):Int = {
-    val node = XML.xpath("/indexer[1]/videos[1]/video[@url='"+url+"']")
+    val node = xpath("/indexer[1]/videos[1]/video[@url='"+url+"']")
     if(node.size == 1)
       node.attr("id").attr.toInt
     else{
-      latestId += 1
-      latestId
+      this.synchronized{
+    	latestId += 1
+    	latestId
+      }
     }
   }
-  
-  //Matcht Datum in einem beliebigen String
-  private[Video] val dateRE = """\A.* (\d{4}-\d{2}-\d{2}) .*\z""".r
-  
-  //Teilt ein Datum in Jahr, Monat und Tag
-  private[Video] val dateCompsRE = """\A(\d{4})-(\d{2})-(\d{2})\z""".r
-  
    
   implicit object vlordering extends Ordering[Video] {
     def compare(a: Video, b: Video) =
@@ -37,7 +39,9 @@ object Video {
 
 
 
-class Video(val url: String) {
+case class Video(val url: String) {
+  
+  import de.blackpinguin.util.Dates._
   
   //eindeutige ID
   val id:Int = Video.getID(url)
@@ -47,27 +51,27 @@ class Video(val url: String) {
   
   def title(conf: ConfigEntry): String = conf.title(this)
   
+  //Benutzerkennung des Accounts der das Video hochgeladen hat
+  var author: String = null
+  
   //Dauer
   var duration: Duration = null
   
   //Veroeffentlichungsdatum
-  var pubDate: String = null
+  var pubDate: Date = null
   
   //Datum aus dem Title, oder falls nicht vorhanden aus pubDate
-  lazy val date: String = {
-    Video.dateRE.findFirstMatchIn(title) match {
-      case Some(m) => m.group(1)
-      case None => pubDate
-    }
+  lazy val date: Date = {
+    val d = Date(title)
+    if(d == null) pubDate
+    else d
   }
   
   //Semester
-  private[this] lazy val Video.dateCompsRE(y, m, d) = date
-  private[this] lazy val (year, month, day) = (y.toInt, m.toInt, d.toInt)
   lazy val semester: String = {
-    if (month < 3) (year - 1)+" WiSe"
-    else if(month < 9) year+" SoSe"
-    else year+" WiSe"
+    if (date.month < 3) (date.year - 1)+" WiSe"
+    else if(date.month < 9) date.year+" SoSe"
+    else date.year+" WiSe"
   }
  
   

@@ -1,86 +1,214 @@
 package de.blackpinguin.mediaindexer
 
 import scala.xml.NodeSeq
+import collection.mutable.{Set => Coll}
 import collection.immutable.{ SortedSet => Set }
-import de.blackpinguin.mediaindexer.{ VideoLink => VL }
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import org.w3c.dom.Document
+import scala.util.Success
+import scala.util.Failure
+import scala.util.matching.Regex
 
 object Mediathek {
-
-  val domain = "http://media.mt.haw-hamburg.de"
-  val div = "div"
-
-  //lädt alle Videos von der Seite und fügt sie zum Set hinzu, falls sie noch nicht vorhanden sind
-  def getVideos(page: Int = 1, set: Set[VL] = Set[VL]()): Set[VL] = {
-    println("hole Seite " + page)
-
-    //URL die 45 Videos auf einmal lädt
-    val url = "/media/list/component/boxList/filter/all/limit/all/layout/thumb/page/"
-
-    //XML-Dokument aus der HTML-Antwort des Servers generieren
-    val doc = HTTP.getXML(domain + url + page)
-
-    //XPATH: /html/body[1]/div[3]/div[1]/div[3]/div[2]/div[2]/div[2]/
-    val xml = (((((((doc \ "body")(0) \ div)(2) \ div)(0) \ div)(2) \ div)(1) \ div)(1) \ div)(1)
-
-    //Liste aller Videos
-    // xml/ul[1]/li		/h3/a
-    val list = (xml \ "ul")(0) \ "li"
-
-    //nur neue videos hinzufügen
-    val newset = addVideos(list, set)
-
-    //Videos von weiteren Seiten laden
-    /// xml/div[1]/div[1]/a
-    val pages = ((xml \ div)(0) \ div)(0) \ "a"
-    morePages(pages, url, (page + 1), newset)
+  
+  import de.blackpinguin.util._
+  import de.blackpinguin.util.AsyncHTTP
+  import de.blackpinguin.util.DOM._
+  import de.blackpinguin.util.{Properties => Prop}
+  
+  Prop.addDefault(Map(
+        ("domain", "http://mediathek.mt.haw-hamburg.de")
+      , ("pages.url", "/media/list/component/boxList/filter/all/limit/all/layout/thumbBig/page/")
+      , ("pages.xpath", "//div[@class='pagination']/a/@href")
+      , ("videos.xpath", "//div[@id='s-media-box-list']/ul[1]/li")
+      , ("video.url.xpath", "./a[@class='play']/@href")
+      , ("video.title.xpath", "./a[@class='play']/@title")
+      , ("video.duration.xpath", "./div[1]/p[2]")
+      , ("video.duration.regex", "Dauer: ((\\d+:)?\\d{2}:\\d{2})")
+      , ("video.pubDate.xpath", "//ul[@id='mediaInfo']/li[2]")
+      , ("video.author.xpath", "./div[1]/p[1]/a")
+      , ("video.files.xpath", "//video[@id='index_video']//source")
+      , ("video.file.url.xpath", "./@src")
+      , ("video.file.type.xpath", "./@type")
+  ))
+  
+  
+  private[this] var regexes = Map[String, Regex]() 
+  
+  case class MatchException(regex: String, str: String) extends RuntimeException {
+    override def getMessage: String = "Fehler: Regulärer Ausdruck '"+regex+"' matcht nicht auf '"+str+"'."
   }
+  
+  def getText(property: String, node:N = null)(implicit doc: Document): String = {
+    //String mittels XPath aus Document holen
+    val prop = Prop(property+".xpath")
+    val str = (if(node == null) xpath(prop) else node.xpath(prop)).getTextContent
+    
+    //schaue ob eine optionale regex Property exisitert
+    Prop.get(property+".regex") match {
+      case Some(value) =>
+        regexes.synchronized{
+          if(!regexes.contains(str))
+            regexes += property -> value.r
+        }
+        val r = regexes(property)
+        
+        r.findFirstMatchIn(str) match {
+          case Some(m) => m.group(1)
+          case None => throw MatchException(value, str)
+        }
+      case None => 
+        str
+    }    
+  }
+  
+  
+  
+  def getNodes(property: String, node:N = null)(implicit doc: Document): NL = 
+    if(node == null)
+      xpath(Prop(property+".xpath"))
+    else
+      node.xpath(Prop(property+".xpath"))
+  
+  
+  
+  val client = AsyncHTTP
+  val latestVideo = Video.latest
 
-  //Schaut ob noch weitere Seiten mit Videos existieren, und lädt diese
-  private def morePages(pages: NodeSeq, url: String, page: Int, set: Set[VL]): Set[VL] = {
-    //für alle verlinkten Seiten
-    for (a <- pages) {
-      val href = (a \ "@href").text
-      //existiert ein Link auf eine Seite mit einen um 1 höheren Index?
-      if (href.equals(url + page))
-        return getVideos(page, set)
+  type Cond = Video => Boolean
+  
+  def full = viewPages (_ => true)(_ => false)
+  
+  def small = viewPages (_.id > latestVideo)(_.id <= latestVideo)
+  
+  def update(url:String) = {
+      val cond:Cond = {v => url.equalsIgnoreCase(v.url)}
+      viewPages(cond)(cond)
+  }
+  
+  def viewPages(examine: Cond)(abort: Cond): Unit = 
+    de.blackpinguin.util.Time.measureAndPrint{
+      val videos = Coll[Future[Video]]()
+      val future = examinePage(1, videos)(examine)(abort)
+      waitFor(future)
+      println(videos.size + " neue Videos")
+      videos.foreach(waitFor)
+      XML.save
     }
-    //keine weiteren Seiten, gebe Eingabe direkt aus
-    set
-  }
 
-  //fügt die Videos die auf der aktuellen Seite gefunden wurden zum Set hinzu
-  private def addVideos(list: NodeSeq, set: Set[VL]) = {
-    var s = set
-    //für jedes Video
-    for (li <- list) {
-      val a = ((li \ "h3")(0) \ "a")(0)
-      val duration = ((li \ div)(0) \ "span")(0).text
-      val title = Output.fixUmlaute((a \ "@title").text)
-      val href = domain + (a \ "@href").text
-      //wenn der Videotitel valide ist
-      if (VL.isValid(title)) {
-        val vl = VL(title, href, duration)
-        //wenn das Video noch nicht vorhanden ist
-        if (!s.contains(vl)) {
-          //video url holen
-          getVideoLink(vl)
-          //zum set hinzufügen
-          s = s + vl
+  def examinePage(n: Int, videos: Coll[Future[Video]])(examine: Cond)(abort: Cond): Future[Unit] = {
+    for (doc <- client.getDOM(Prop("domain") + Prop("pages.url") + n)) yield {
+      implicit val d = doc
+      println("Seite " + n + " geladen.")
+      var ende = false
+
+      //alle <li>-Elemente parallel auswerten
+      val vs = for (li <- getNodes("videos")) yield initVideo(li)
+      
+      //für alle Videos
+      for (fv <- vs){
+        //warte auf das Future-Ergebnis
+        val v = result(fv)
+        //wenn es ein neues video ist
+        if (examine(v))
+          //betrachte es genauer
+          videos.add(examineVideo(v))
+        //bei alten Videos nicht zur nächsten Seite
+        if(abort(v))
+          ende = true
+      }
+          
+      //existiert überhaupt eine weitere Seite?
+      if(!ende){
+        ende = true
+        for(node <- getNodes("pages")){
+          if(node.attr.equals(Prop("pages.url")+(n+1)))
+            ende = false
         }
       }
+      
+      if(!ende)
+        //nächste Seite laden
+        waitFor(examinePage(n + 1, videos)(examine)(abort))
     }
-    s
   }
+  
+  
+  //Eingabe Node: <li>
+  //hole Infos: url, title, duration 
+  def initVideo(node: N)(implicit doc: Document): Future[Video] =
+    Future {
 
-  //für Videos die noch nicht abgerufen wurden, lade sie und ermittel die Video-URL
-  def getVideoLink(vl: VL) = {
-    println("hole Video " + vl.title)
+      //Video-URL
+      val v = Video(Prop("domain") + getText("video.url", node))
 
-    //HTTP-Request und umwandeln zu XML
-    val doc = HTTP.getXML(vl.url)
+      //Video-Titel
+      v.title = fixUmlaute(getText("video.title", node))
 
-    //Video-Link aus DOM-Struktur holen, und Dateiendung entfernen
-    vl.videolink = domain + (((doc \\ "video")(0) \ "source")(0) \ "@src").text.split("\\.")(0)
+      //Video-Autor
+      v.author = getText("video.author", node)
+      
+      //Video-Dauer
+      v.duration = getText("video.duration", node)
+      
+      v
+    }
+
+  //bekannt: url, title, duration
+  //benoetigt: files, pubDate
+  def examineVideo(video: Video): Future[Video] = 
+    for {
+      doc <- client.getDOM(video.url)
+    } yield {
+      implicit val d = doc
+
+      //println("Video " + video.title + " geladen.")
+      
+      //Hochladedatum
+      video.pubDate = getText("video.pubDate")
+
+      //für alle Videodateien
+      getNodes("video.files").foreach { source =>
+        //zum Video hinzufügen
+        video add VFile(Prop("domain") + source("src"), source("type"))
+      }
+
+      //Video zu <videos> hinzufügen
+      val addToVideos = Future(XML.add(video))
+
+      //layers ermitteln und zum <index> hinzufügen
+      val addLayers = Future(ConfigEntry.layers(video))
+      
+      waitFor(addToVideos)
+      waitFor(addLayers)
+      
+      video
+    }
+    
+
+  private lazy val umlaute = Map[String, String](
+    ("&Atilde;&Yuml;", "ß"), //sz
+    ("&Atilde;&frac14;", "ü"), //uuml
+    ("&Atilde;&curren;", "ä"), //auml
+    ("&Atilde;&para;", "ö"), //ouml
+    ("&Atilde;&oelig;", "Ü"), //Uuml
+    ("&Atilde;&bdquo;", "Ä"), //Auml
+    ("&szlig;", "ß"),
+    ("&uuml;", "ü"),
+    ("&auml;", "ä"),
+    ("&ouml;", "ö"),
+    ("&Uuml;", "Ü"),
+    ("&Auml;", "Ä"),
+    ("&Ouml;", "Ö") )
+
+  //Umlaute im Titel ersetzen (sonst wird das & bei der Ausgabe zu &amp;)
+  def fixUmlaute(in: String) = {
+    var out = in
+    for (fix <- umlaute)
+      out = out.replace(fix._1, fix._2)
+    out
   }
-
+  
+ 
 }

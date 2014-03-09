@@ -17,16 +17,23 @@ object XSLT {
   System.setProperties(props);
 
   def apply() {
-    //Ordner
+    //XSLT-Ordner
     val dir = new File("xslt")
-    if (dir.exists() && !dir.isDirectory())
+    if (dir.exists && !dir.isDirectory)
       throw new RuntimeException("Error: './xslt' is not a directory")
-    if(!dir.exists())
+    if(!dir.exists)
       dir.mkdir()
     
+    //Output-Ordner
+    val outdir = new File("output")
+    if(outdir.exists && !outdir.isDirectory)
+    	throw new RuntimeException("Error: './output' is not a directory")
+    if(!outdir.exists)
+      outdir.mkdir()
+      
     //XML-Datei
     val xml = new File("videos.xml")
-    if (!xml.exists() || !xml.isFile())
+    if (!xml.exists || !xml.isFile)
       throw new RuntimeException("Error: missing file './videos.xml'")
 
     //XSLT-Dateien
@@ -42,7 +49,7 @@ object XSLT {
           println("generate " + name + "...")
           //Parsing
           val future = Future[Unit] {
-        	  XSLT(xml, f, new File(name))
+        	  XSLT(xml, f, new File(outdir, name))
           }
           futures += future
         }

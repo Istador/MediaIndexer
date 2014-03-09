@@ -4,6 +4,10 @@ package object mediaindexer {
   
   import scala.concurrent.duration.Duration
   
+  import scala.language.implicitConversions
+  
+  implicit def int2String(x:Int):String = x.toString
+  
   implicit def str2Duration(str: String):Duration = {
     var d:Duration = Duration(0, "seconds")
     val comps = str.split(":").map(_.toInt)

@@ -21,19 +21,32 @@
 <xsl:template match="/">
 <html lang="de">
 <head>
-	<title>Video Links</title>
+	<title>Videoindex - Mediathek - DMI - HAW Hamburg</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<script type="text/javascript" src="jquery-1.10.2.min.js"></script>      
 	<script type="text/javascript" src="script.js"></script>
 	<link rel="stylesheet" type="text/css" href="style.css"/>
+	<link rel="alternate" type="application/rss+xml" title="Alle Videos (RSS)" href="rss.xml" />
 </head>
 <body>
+	<h3>Videoindex - Mediathek - DMI - HAW Hamburg (<a title="Alle Videos (RSS)" href="rss.xml">Feed</a>)</h3>
 	<xsl:for-each select="/indexer[1]/index[1]/layer">
 		<xsl:call-template name="layer" />
 	</xsl:for-each>
-	<input type="button" id="check" value="check all"/>
-	<input type="button" id="uncheck" value="uncheck all"/>
+	<p>
+	<input type="button" id="check" value="alle auswählen"/>
+	<input type="button" id="uncheck" value="auswahl aufheben"/>
+	<input type="button" id="reset" value="alles zurücksetzen"/>
+	</p>
 	<p>Diese Seite wurde erstellt von <a href="https://blackpinguin.de/" target="_blank">Robin C. Ladiges</a>.</p>
+	<!-- mit Scala, Java, XML, XSLT, HTML, JavaScript und CSS. -->
+	<!-- unter Verwendung von:
+		AsyncHttpClient
+		HtmlCleaner
+		Xalan-Java
+		(slf4j)
+	-->
+	<!-- Version 3 (2014-03-09) -->
 </body>
 </html>
 </xsl:template>

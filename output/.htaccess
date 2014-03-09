@@ -1,0 +1,8 @@
+AuthName "Authenticate"
+AuthType Basic
+AuthUserFile /internet/lampp/htdocs/https/indexer/output/.htusers
+require user student
+
+<Files ".htusers">
+Deny from all
+</Files>

@@ -32,7 +32,18 @@ object ConfigEntry{
       
       r += ConfigEntry(matchy.substring(1, matchy.length()-1), toupled())
     }
-    r
+    
+    r.toList
+  }
+  
+  //alle Layer eines Videos ermitteln
+  def layers(video: Video): List[Layer] = {
+    var layers = List[Layer]()
+    for{
+      entry <- entries
+      layer = entry.layer(video)
+      if(layer != null)
+    } yield layer
   }
   
 }
@@ -43,7 +54,6 @@ case class ConfigEntry(val matchStr:String, layers: List[(String, Boolean)]) {
   
   private[this] def layerString(video: Video, str: String):String = {
     if(!str.charAt(0).equals('\\')){
-      println("not")
       str
     } else {
       str match {
@@ -63,12 +73,18 @@ case class ConfigEntry(val matchStr:String, layers: List[(String, Boolean)]) {
   }
   
   def layer(video: Video): Layer = {
-    val lays = layers.map({ t => (layerString(video, t._1), t._2) }) 
-    var n = Layer.getLayer(lays(0))
-    for(i <- 1 until lays.size-1){
-      n = n.getLayer(lays(i))
+    try{
+      val lays = layers.map({ t => (layerString(video, t._1), t._2) }) 
+      var n = Layer.getLayer(lays(0))
+      for(i <- 1 until lays.size-1){
+        n = n.getLayer(lays(i))
+      }
+      n.add(video, title(video))
+      n
+    } catch {
+      //wenn das Video nicht auf den regulären Ausdruck matcht
+      case _:NoSuchElementException => null
     }
-    n
   } 
     
 }

@@ -1,0 +1,15 @@
+div {
+	margin-left:20px;
+}
+
+
+/*
+	Quelle: http://mathiasbynens.be/notes/html5-details-jquery
+*/
+
+summary { cursor: pointer; }
+details, summary { display: block; }
+
+/* Add focus styles (for keyboard accessibility) */
+summary:hover { background: #aaa; }
+summary:focus { border-color: orange; }

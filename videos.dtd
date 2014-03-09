@@ -42,6 +42,7 @@
 	date		CDATA #REQUIRED
 	pubdate		CDATA #REQUIRED
 	duration	CDATA #IMPLIED
+	author		CDATA #REQUIRED
 >
 
 
