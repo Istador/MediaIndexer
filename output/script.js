@@ -28,6 +28,10 @@ var isDetailsSupported = (function(doc) {
 }(document));
 
 
+var currentVideo = null;
+
+
+
 
 $(document).ready(function() {if(localStorage){
 
@@ -93,10 +97,10 @@ $(document).ready(function() {if(localStorage){
 			
 			//Gliederungselement switchen
 			if(open){
-				$(this).children(":first(span)").html("&#x25bc;");
+				$(this).children("span:first").html("&#x25bc;");
 				
 			} else {
-				$(this).children(":first(span)").html("&#x25b6;");
+				$(this).children("span:first").html("&#x25b6;");
 			}
 			
 			//speichern im lokalem Speicher
@@ -136,6 +140,83 @@ $(document).ready(function() {if(localStorage){
 	$("#reset").click(function(){
 		localStorage.clear();
 		window.location.reload();
+	});
+	
+	//video wegklicken
+	var closeVideo = function(){
+		$("#background").css("display", "none");
+		$("#videocont").html("");
+	};
+	
+	$("#background").click(closeVideo);
+	
+	//auf video-content klicken soll es nicht schließen
+	$("#videocont").click(function(event){
+		event.stopPropagation();
+	});
+	
+	var nextVideo = function(){
+		closeVideo();
+		currentVideo = currentVideo.next("div");
+		loadVideo(currentVideo);
+	}
+	
+	var prevVideo = function(){
+		closeVideo();
+		currentVideo = currentVideo.prev("div");
+		loadVideo(currentVideo);
+	}
+	
+	var loadVideo = function(div){
+		//Close Button
+		$("<div/>").attr("class","closeVideo").html("&#x274c;").click(closeVideo).appendTo("#videocont");
+		
+		//nicht das erste Video
+		if(div.prev("div").prev("div").length == 1){
+			$("<div/>").attr("class","prevVideo").html("&#x2190;").click(prevVideo).appendTo("#videocont");
+		}
+		
+		//nicht das letzte Video
+		if(div.next("div").length == 1){
+			$("<div/>").attr("class","nextVideo").html("&#x2192;").click(nextVideo).appendTo("#videocont");
+		}
+		
+		//Videotitel
+		var title = div.children("a:first").text();
+		$("<div/>").attr("class","vtitle").text(title).appendTo("#videocont");
+		
+		
+		//video element erstellen
+		var video = $("<video/>");
+		video.attr("width","600").attr("height","450")
+		video.attr("preload","none").attr("controls","controls");
+		
+		//links auf die Video-Dateien
+		var files = div.children("a:not(:first)");
+		
+		//für jeden Dateityp, ein <source> zum Video
+		files.each(function(){
+			var url = $(this).attr("href");
+			var type = $(this).text();
+			type = "video/" + type.substring(1, type.length - 1);
+			
+			var source = $("<source/>");
+			source.attr("src", url).attr("type", type);
+			source.appendTo(video);
+		});
+		
+		//<video> einfügen
+		video.appendTo("#videocont");
+		
+		//einblenden
+		$("#background").css("display", "block");
+	};
+	
+	//video öffnen
+	$(".videobtn").click(function(){
+		//div, welches die Videodaten enthält
+		currentVideo = $(this).parent();
+		loadVideo(currentVideo);
 	});
 	
 }});

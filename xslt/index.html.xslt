@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:stylesheet version="1.0" 
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:str="http://exslt.org/strings"
+	extension-element-prefixes="str"
+>
 
+
+<xsl:import href="EXSLT/str/functions/replace/str.replace.template.xsl" />
 
 
 <xsl:output method="html"
@@ -22,7 +28,6 @@
 <html lang="de">
 <head>
 	<title>Videoindex - Mediathek - DMI - HAW Hamburg</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<script type="text/javascript" src="jquery-1.10.2.min.js"></script>      
 	<script type="text/javascript" src="script.js"></script>
 	<link rel="stylesheet" type="text/css" href="style.css"/>
@@ -30,6 +35,9 @@
 </head>
 <body>
 	<h3>Videoindex - Mediathek - DMI - HAW Hamburg (<a title="Alle Videos (RSS)" href="rss.xml">Feed</a>)</h3>
+	<div id="background">
+		<div id="videocont" class="round"></div>
+	</div>
 	<xsl:for-each select="/indexer[1]/index[1]/layer">
 		<xsl:call-template name="layer" />
 	</xsl:for-each>
@@ -56,8 +64,16 @@
 <!-- Rekursive Funktion: Ausgabe einer Ebene -->
 <xsl:template name="layer">
 	<!-- Funktionsparameter mit Default-Wert -->
-	<xsl:param name="path" select="@name" />
+	<xsl:param name="pathparam" select="@name" />
 
+	<xsl:variable name="path">
+		<xsl:call-template name="str:replace">
+			<xsl:with-param name="string" select="$pathparam" />
+			<xsl:with-param name="search" select="' '" />
+			<xsl:with-param name="replace" select="'_'" />
+		</xsl:call-template>
+	</xsl:variable>
+	
 	<!-- Funktionskörper -->
 	<details>
 		<xsl:attribute name="id"><xsl:value-of select="concat('d_', $path)"/></xsl:attribute>
@@ -83,7 +99,7 @@
 			<xsl:for-each select="layer">
 				<!-- Rekursionsaufruf mit Parameter -->
 				<xsl:call-template name="layer">
-					<xsl:with-param name="path" select="concat($path, '_', @name)"/>
+					<xsl:with-param name="pathparam" select="concat($path, '_', @name)"/>
 				</xsl:call-template>
 			</xsl:for-each>
 		
@@ -91,7 +107,7 @@
 			<xsl:for-each select="vref">
 				<!-- Funktionsaufruf mit Parameter -->
 				<xsl:call-template name="vref">
-					<xsl:with-param name="path" select="$path"/>
+					<xsl:with-param name="pathparam" select="$path"/>
 				</xsl:call-template>
 			</xsl:for-each>
 		</div>
@@ -104,14 +120,14 @@
 <!-- Funktion: Finden und Ausgeben eines Videos anhand der ID -->
 <xsl:template name="vref">
 	<!-- Funktionsparameter -->
-	<xsl:param name="path" />
+	<xsl:param name="pathparam" />
 	
 	<xsl:variable name="id" select="@id" />
 	<xsl:variable name="title" select="@title" />
 	
 	<xsl:for-each select="/indexer[1]/videos[1]/video[@id=$id]">
 		<xsl:call-template name="video">
-			<xsl:with-param name="path" select="concat($path, '_', $title)"/>
+			<xsl:with-param name="pathparam" select="concat($pathparam, '_', $title)"/>
 			<xsl:with-param name="title" select="$title"/>
 		</xsl:call-template>
 	</xsl:for-each>
@@ -123,9 +139,17 @@
 <!-- Funktion: Ausgabe eines Videos -->
 <xsl:template name="video">
 	<!-- Funktionsparameter -->
-	<xsl:param name="path" />
+	<xsl:param name="pathparam" />
 	<xsl:param name="title" />
-
+	
+	<xsl:variable name="path">
+		<xsl:call-template name="str:replace">
+			<xsl:with-param name="string" select="$pathparam" />
+			<xsl:with-param name="search" select="' '" />
+			<xsl:with-param name="replace" select="'_'" />
+		</xsl:call-template>
+	</xsl:variable>
+	
 	<!-- Funktionskörper -->
 	<div>
 		<!-- Checkbox -->
@@ -153,6 +177,10 @@
 				<xsl:value-of select="concat('[',@type,']')"/>
 			</a>
 		</xsl:for-each>
+		
+		<!-- Button um den eigebetteten Player zu öffnen -->
+		<xsl:text> </xsl:text>
+		<input type="button" class="videobtn" value="anschauen"/>
 		
 	</div>
 </xsl:template>
