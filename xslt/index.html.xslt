@@ -31,22 +31,38 @@
 	<script type="text/javascript" src="jquery-1.10.2.min.js"></script>      
 	<script type="text/javascript" src="script.js"></script>
 	<link rel="stylesheet" type="text/css" href="style.css"/>
-	<link rel="alternate" type="application/rss+xml" title="Alle Videos (RSS)" href="rss.xml" />
+	<link rel="alternate" type="application/rss+xml" title="Alle Videos (RSS)" href="feed.rss" />
 </head>
 <body>
-	<h3>Videoindex - Mediathek - DMI - HAW Hamburg (<a title="Alle Videos (RSS)" href="rss.xml">Feed</a>)</h3>
+	<header>
+		<p>
+			Videoindex - Mediathek - DMI - HAW Hamburg
+			<a class="rss" title="Alle Videos (RSS)" href="feed.rss">
+				<img class="rss" src="rss.png" alt="RSS Icon"/>
+			</a>
+		</p>
+	</header>
+	
 	<div id="background">
 		<div id="videocont" class="round"></div>
 	</div>
+	
 	<xsl:for-each select="/indexer[1]/index[1]/layer">
 		<xsl:call-template name="layer" />
 	</xsl:for-each>
-	<p>
-	<input type="button" id="check" value="alle auswählen"/>
-	<input type="button" id="uncheck" value="auswahl aufheben"/>
-	<input type="button" id="reset" value="alles zurücksetzen"/>
-	</p>
-	<p>Diese Seite wurde erstellt von <a href="https://blackpinguin.de/" target="_blank">Robin C. Ladiges</a>.</p>
+	
+	<footer>
+		<p>
+		<input type="button" id="check" value="alle auswählen"/>
+		<input type="button" id="uncheck" value="auswahl aufheben"/>
+		<input type="button" id="reset" value="alles zurücksetzen"/>
+		</p>
+		<p>Diese Seite wurde zuletzt generiert <xsl:call-template name="str:replace">
+			<xsl:with-param name="string" select="/indexer[1]/@gendate" />
+			<xsl:with-param name="search" select="' '" />
+			<xsl:with-param name="replace" select="' um '" />
+		</xsl:call-template> Uhr, mit einem Program von <a href="https://blackpinguin.de/" target="_blank">Robin C. Ladiges</a>.</p>
+	</footer>
 	<!-- mit Scala, Java, XML, XSLT, HTML, JavaScript und CSS. -->
 	<!-- unter Verwendung von:
 		AsyncHttpClient
@@ -83,7 +99,18 @@
 					<xsl:attribute name="name"><xsl:value-of select="concat('cb_', $path)"/></xsl:attribute>
 				</input>
 			</xsl:if>
+			
 			<xsl:value-of select="@name"/>
+			
+			<xsl:if test="not(@checkbox and @checkbox = 'true')">
+				<xsl:text> </xsl:text>
+				<a class="rss" title="" href="feed.rss">
+					<xsl:attribute name="title"><xsl:value-of select="@name"/> als Feed abonnieren (RSS)</xsl:attribute>
+					<xsl:attribute name="href"><xsl:value-of select="$path"/>/feed.rss</xsl:attribute>
+					<img class="rss" src="rss.png" alt="RSS Icon"/>
+				</a>
+			</xsl:if>
+			
 		</summary>
 		
 		<div>
@@ -99,7 +126,7 @@
 			<xsl:for-each select="layer">
 				<!-- Rekursionsaufruf mit Parameter -->
 				<xsl:call-template name="layer">
-					<xsl:with-param name="pathparam" select="concat($path, '_', @name)"/>
+					<xsl:with-param name="pathparam" select="concat($path, '/', @name)"/>
 				</xsl:call-template>
 			</xsl:for-each>
 		
@@ -127,7 +154,7 @@
 	
 	<xsl:for-each select="/indexer[1]/videos[1]/video[@id=$id]">
 		<xsl:call-template name="video">
-			<xsl:with-param name="pathparam" select="concat($pathparam, '_', $title)"/>
+			<xsl:with-param name="pathparam" select="concat($pathparam, '/', $title)"/>
 			<xsl:with-param name="title" select="$title"/>
 		</xsl:call-template>
 	</xsl:for-each>

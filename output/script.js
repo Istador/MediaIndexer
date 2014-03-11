@@ -28,8 +28,6 @@ var isDetailsSupported = (function(doc) {
 }(document));
 
 
-var currentVideo = null;
-
 
 
 
@@ -155,6 +153,15 @@ $(document).ready(function() {if(localStorage){
 		event.stopPropagation();
 	});
 	
+	
+	$("input").click(function(event){
+		event.stopPropagation();
+	});
+	
+	$("a").click(function(event){
+		event.stopPropagation();
+	});
+	
 	var nextVideo = function(){
 		closeVideo();
 		currentVideo = currentVideo.next("div");
@@ -169,7 +176,7 @@ $(document).ready(function() {if(localStorage){
 	
 	var loadVideo = function(div){
 		//Close Button
-		$("<div/>").attr("class","closeVideo").html("&#x274c;").click(closeVideo).appendTo("#videocont");
+		$("<div/>").attr("class","closeVideo").html("X"/*"&#x274c;"*/).click(closeVideo).appendTo("#videocont");
 		
 		//nicht das erste Video
 		if(div.prev("div").prev("div").length == 1){

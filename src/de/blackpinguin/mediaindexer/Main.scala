@@ -14,7 +14,7 @@ object Main {
     
     
     if(args.length == 0){
-      small
+      xslt
     }
     else if(args.length == 1){
       args(0) match{

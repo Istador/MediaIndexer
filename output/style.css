@@ -1,7 +1,20 @@
-div {
-	margin-left:20px;
+body {
+	font-family: "Arial Unicode MS", "Lucida Sans Unicode", "DejaVu Sans", "Quivira", "Symbola", "Code2000", sans-serif ;
 }
 
+
+details, details div, details div div {
+	margin: 2px 0px;
+}
+
+details div, details div div  {
+	margin-left: 20px;
+}
+
+
+p {
+	margin: 10px 0px;
+}
 
 /*
 	Quelle: http://mathiasbynens.be/notes/html5-details-jquery
@@ -14,11 +27,30 @@ details, summary { display: block; }
 summary:hover { background: #aaa; }
 summary:focus { border-color: orange; }
 
+header {
+	font-size: 1.25em;
+}
+
+a.rss {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+img.rss {
+	height: 1em;
+	width: auto;
+}
+
+header a img {
+	height: 1.25em;
+	width: auto;
+}
+
+
 
 /* Videotitel beim eingebetteten ansehen. */
 .vtitle{
 	line-height: 30px;
-	margin-left: 0px;
 	font-weight: bold;
 	font-size: 14pt;
 }
@@ -37,7 +69,16 @@ summary:focus { border-color: orange; }
 	margin-left: auto;
 	margin-right: auto;
 	
+	height: 480px;
+	/*
+	height: -moz-calc( 450px + 30px );
+	height: -webkit-calc( 450px + 30px );
 	height: calc( 450px + 30px );
+	*/
+	
+	top: 20px;
+	top: -moz-calc(50% - 225px - 15px);
+	top: -webkit-calc(50% - 225px - 15px);
 	top: calc(50% - 225px - 15px);
 }
 
@@ -49,7 +90,6 @@ summary:focus { border-color: orange; }
 	top: 0px;
 	width: 100%;
 	height: 100%;
-	margin-left: 0px;
 	background-color: rgba(0, 0, 0, 0.8);
 	text-align: center;
 	cursor: pointer;
@@ -75,6 +115,7 @@ summary:focus { border-color: orange; }
 	cursor: pointer;
 	
 	text-align: center;
+	font-weight: bold;
 	
 	-webkit-border-radius: 13px;
 	-moz-border-radius: 13px;
@@ -90,22 +131,26 @@ summary:focus { border-color: orange; }
 .closeVideo {
 	left: 100%;
 	
-	padding-top: 3px;
+	/* padding-top: 3px; */
 	
 	margin-top: -13px;
 	margin-left: -13px;
 }
 
-.prevVideo {
+.prevVideo, .nextVideo {
+	top: 227px;
+	top: -moz-calc(50% - 13px);
+	top: -webkit-calc(50% - 13px);
 	top: calc(50% - 13px);
+}
+
+.prevVideo {
 	left: 0px;
 	margin-left: -26px;
 }
 
 .nextVideo{
-	top: calc(50% - 13px);
 	left: 100%;
-	margin-left: 0px;
 }
 
 .round{
