@@ -3,7 +3,7 @@ package de.blackpinguin.util
 import org.w3c.dom.{Document, Node, NodeList}
 import java.io.{File, InputStream, FileInputStream, OutputStream, FileOutputStream}
 import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.dom.{DOMSource, DOMResult}
 import javax.xml.transform.stream.StreamResult
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants.NODESET
@@ -48,6 +48,19 @@ object DOM {
     xp.evaluate(str, n, NODESET).asInstanceOf[NodeList]
   }
   
+  
+  implicit class ExtendedDocument(doc: Document){
+    
+    private[this] val tfact = ThreadSafe(TransformerFactory.newInstance)
+    
+    def copy: Document = {
+      val tx = tfact.get.newTransformer
+      val source = new DOMSource(doc)
+      val result = new DOMResult()
+      tx.transform(source, result)
+      result.getNode.asInstanceOf[Document]
+    } 
+  }
   
   
   case class N(n: Node)(implicit doc: Document){

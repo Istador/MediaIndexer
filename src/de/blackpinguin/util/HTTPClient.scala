@@ -10,7 +10,6 @@ import java.io.InputStream
 import org.htmlcleaner.{ DomSerializer => Serializer }
 import org.htmlcleaner.{ HtmlCleaner => Cleaner }
 import org.w3c.dom.Document
-import scala.util.DynamicVariable
 
 
 
@@ -19,13 +18,17 @@ trait HTMLCleaner {
 
   import org.htmlcleaner.{ HtmlCleaner => Cleaner, DomSerializer => Serializer }
 
-  private[this] val cleaner = new DynamicVariable(new Cleaner)
-  private[this] val props = cleaner.value.getProperties()
+  private[this] val cleaner = ThreadSafe(new Cleaner)
+  private[this] val props = cleaner.get.getProperties()
   props.setNamespacesAware(true) //um sich nicht beim parsen an namespaces aufzuhängen
-  private[this] val serializer = new DynamicVariable(new Serializer(props, true))
+  props.setCharset("UTF-8")
+  props.setTranslateSpecialEntities(true)
+  props.setAdvancedXmlEscape(true)
+  props.setRecognizeUnicodeChars(true)
+  private[this] val serializer = ThreadSafe(new Serializer(props, true))
 
   def clean(is: InputStream): Document =
-    serializer.value.createDOM(cleaner.value.clean(is))
+    serializer.get.createDOM(cleaner.get.clean(is, "UTF-8"))
 }
 
 
@@ -67,17 +70,17 @@ trait HTTP extends HTMLCleaner {
 //Asynchroner HTTP Client (nicht blockierend)
 object AsyncHTTP extends HTTP {
 
-  private[this] val builder = {
+  private[this] val builder = ThreadSafe{
     val tmp = new AsyncHttpClientConfig.Builder()
     tmp.setFollowRedirects(true)
-    new DynamicVariable(tmp)
+    tmp
   }
   
-  private[this] val client = new DynamicVariable(new AsyncHttpClient(builder.value.build()))
+  private[this] val client = ThreadSafe(new AsyncHttpClient(builder.get.build))
   
 
   protected def get(url: String)(implicit exec: Executor): Future[Response] = {
-    val f = client.value.prepareGet(url).execute()
+    val f = client.get.prepareGet(url).setHeader("Accept-Charset", "utf-8").execute()
     val p = Promise[Response]()
     f.addListener(new Runnable {
       def run = {

@@ -1,5 +1,5 @@
 body {
-	font-family: "Arial Unicode MS", "Lucida Sans Unicode", "DejaVu Sans", "Quivira", "Symbola", "Code2000", sans-serif ;
+	font-family: serif ;
 }
 
 
@@ -31,12 +31,12 @@ header {
 	font-size: 1.25em;
 }
 
-a.rss {
+a.rss, a.extern {
 	display: inline-block;
 	vertical-align: middle;
 }
 
-img.rss {
+img.rss, img.extern {
 	height: 1em;
 	width: auto;
 	border: 0px;
@@ -116,6 +116,8 @@ header a img {
 	cursor: pointer;
 	
 	text-align: center;
+	
+	font-family: sans-serif;
 	font-weight: bold;
 	
 	-webkit-border-radius: 13px;

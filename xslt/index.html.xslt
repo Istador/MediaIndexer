@@ -68,6 +68,7 @@
 		AsyncHttpClient
 		HtmlCleaner
 		Xalan-Java
+		Apache Commons Lang
 		(slf4j)
 	-->
 	<!-- Version 3 (2014-03-09) -->
@@ -104,7 +105,13 @@
 			
 			<xsl:if test="not(@checkbox and @checkbox = 'true')">
 				<xsl:text> </xsl:text>
-				<a class="rss" title="" href="feed.rss">
+				<a class="extern">
+					<xsl:attribute name="title"><xsl:value-of select="@name"/></xsl:attribute>
+					<xsl:attribute name="href"><xsl:value-of select="$path"/>/</xsl:attribute>
+					<img class="extern" src="extern.png" alt="Extern Icon"/>
+				</a>
+				<xsl:text> </xsl:text>
+				<a class="rss">
 					<xsl:attribute name="title"><xsl:value-of select="@name"/> als Feed abonnieren (RSS)</xsl:attribute>
 					<xsl:attribute name="href"><xsl:value-of select="$path"/>/feed.rss</xsl:attribute>
 					<img class="rss" src="rss.png" alt="RSS Icon"/>

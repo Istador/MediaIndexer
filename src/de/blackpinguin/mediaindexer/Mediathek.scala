@@ -9,6 +9,7 @@ import org.w3c.dom.Document
 import scala.util.Success
 import scala.util.Failure
 import scala.util.matching.Regex
+import org.apache.commons.lang3.StringEscapeUtils
 
 object Mediathek {
   
@@ -185,29 +186,11 @@ object Mediathek {
       
       video
     }
-    
-
-  private lazy val umlaute = Map[String, String](
-    ("&Atilde;&Yuml;", "ß"), //sz
-    ("&Atilde;&frac14;", "ü"), //uuml
-    ("&Atilde;&curren;", "ä"), //auml
-    ("&Atilde;&para;", "ö"), //ouml
-    ("&Atilde;&oelig;", "Ü"), //Uuml
-    ("&Atilde;&bdquo;", "Ä"), //Auml
-    ("&szlig;", "ß"),
-    ("&uuml;", "ü"),
-    ("&auml;", "ä"),
-    ("&ouml;", "ö"),
-    ("&Uuml;", "Ü"),
-    ("&Auml;", "Ä"),
-    ("&Ouml;", "Ö") )
-
+  
+  
   //Umlaute im Titel ersetzen (sonst wird das & bei der Ausgabe zu &amp;)
   def fixUmlaute(in: String) = {
-    var out = in
-    for (fix <- umlaute)
-      out = out.replace(fix._1, fix._2)
-    out
+    StringEscapeUtils.unescapeHtml4(in)
   }
   
  
