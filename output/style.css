@@ -39,6 +39,7 @@ a.rss {
 img.rss {
 	height: 1em;
 	width: auto;
+	border: 0px;
 }
 
 header a img {
