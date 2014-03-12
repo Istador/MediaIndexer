@@ -1,1 +1,0 @@
-http://www.hars.de/2009/01/html-as-xml-in-scala.html
