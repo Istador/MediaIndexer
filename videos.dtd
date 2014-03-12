@@ -39,6 +39,7 @@
 <!ATTLIST video
 	id			CDATA #REQUIRED
 	url			CDATA #REQUIRED
+	title		CDATA #REQUIRED
 	date		CDATA #REQUIRED
 	pubdate		CDATA #REQUIRED
 	duration	CDATA #IMPLIED

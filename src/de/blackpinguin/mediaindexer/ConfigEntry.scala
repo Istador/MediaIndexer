@@ -30,7 +30,7 @@ object ConfigEntry{
         }
       }
       
-      r += ConfigEntry(matchy.substring(1, matchy.length()-1), toupled())
+      r += ConfigEntry(matchy.substring(1, matchy.length - 1), toupled())
     }
     
     r.toList

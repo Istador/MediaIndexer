@@ -34,7 +34,7 @@ object Time {
     var out = Output(time / 1000, "µs", time % 1000, "ns")
     out = next(out, 1000, "ms")
 
-    if (time >= 1000) {
+    if (out.time1 >= 1000) {
       out = next(out, 1000, "s")
       out = next(out, 60, "m")
       out = next(out, 60, "h")

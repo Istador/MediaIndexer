@@ -1,19 +1,37 @@
 package de.blackpinguin.mediaindexer
 
 import scala.concurrent.duration.Duration
-
+import de.blackpinguin.util.DOM._
 
 
 case class VFile(url: String, _typ:String){
-  lazy val typ:String = _typ.split("/")(1)
+  lazy val typ: String = _typ.split("/")(1)
 }
 
 
 
 object Video {
   
-  import XML.doc
-  import de.blackpinguin.util.DOM.xpath
+  import XML.doc //um es implicit zu verwenden
+  
+  //
+  def fromXML(node: N):Video = {
+    val v = Video( node.attr("url").attr )
+
+    v.title = node.attr("title").attr
+    v.author = node.attr("author").attr
+    v.duration = node.attr("duration").attr
+    v.pubDate = node.attr("pubdate").attr
+    
+    for(file <- node.getChildNodes:NL){
+      val url = file.attr("url").attr
+      val typ = file.attr("type").attr
+      v.add(VFile(url, "video/"+typ))      
+    }
+    
+    v
+  }
+  
   
   def latest: Int = latestId
   

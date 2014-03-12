@@ -93,14 +93,37 @@ object DOM {
   implicit def N2Node(n: N): Node = 
     if(n==null) null else n.n
   
-  case class NL(nl: NodeList)(implicit doc: Document){
-    def apply(index:Int):N = if(nl == null) null else nl.item(index)
-    def size:Int = if(nl == null) 0 else nl.getLength()
+  case class NL(nl: NodeList)(implicit doc: Document) extends Seq[N]{
     
+    def apply(index: Int): N = if(nl == null) null else nl.item(index)
+    
+    def iterator: Iterator[N] = new Iterator[N]{
+      private[this] var n = 0 
+      def hasNext: Boolean = n < nl.getLength
+      def next: N = { n=n+1 ; apply(n-1) }
+    }
+    
+    def length: Int = if(nl == null) 0 else nl.getLength()
+    
+    /*
     def foreach[T](f: N => T):Unit = if(nl != null){
       for(i <- (0 until size)){
         f(nl.item(i))
       }
+    }
+    
+    def forall(f: N => Boolean): Boolean = {
+      for(n <- this) 
+        if(!f(n)) 
+          return false
+      true
+    }
+    
+    def exists(f: N => Boolean): Boolean = {
+      for(n <- this)
+        if(f(n))
+          return true
+      false
     }
     
     def map[T](f: N => T):List[T] = {
@@ -116,6 +139,7 @@ object DOM {
         r = f(nl.item(size-i)) ::: r
       r
     }
+    */
     
   }
   implicit def NodeList2NL(nl: NodeList)(implicit doc: Document): NL = 

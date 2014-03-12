@@ -1,22 +1,17 @@
 package de.blackpinguin.mediaindexer
 
-import scala.xml.NodeSeq
 import collection.mutable.{Set => Coll}
-import collection.immutable.{ SortedSet => Set }
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.w3c.dom.Document
-import scala.util.Success
-import scala.util.Failure
 import scala.util.matching.Regex
 import org.apache.commons.lang3.StringEscapeUtils
 
+import de.blackpinguin.util._
+import de.blackpinguin.util.{Properties => Prop}
+import de.blackpinguin.util.DOM._
+
 object Mediathek {
-  
-  import de.blackpinguin.util._
-  import de.blackpinguin.util.AsyncHTTP
-  import de.blackpinguin.util.DOM._
-  import de.blackpinguin.util.{Properties => Prop}
   
   Prop.addDefault(Map(
         ("domain", "http://mediathek.mt.haw-hamburg.de")
@@ -75,30 +70,69 @@ object Mediathek {
   
   
   val client = AsyncHTTP
+  
+  client.recover = {
+      case HTTP.StatusException(url, status) =>
+        println("Fehler beim Laden von '"+url+"'. HTTP Status Code: "+status)
+  }
+  
   val latestVideo = Video.latest
 
   type Cond = Video => Boolean
   
-  def full = viewPages (_ => true)(_ => false)
+  //von vorne, alle videos überprüfen ID's behalten
+  def full = viewPages (_ => true) (_ => false) (1) (_+1)
   
-  def small = viewPages (_.id > latestVideo)(_.id <= latestVideo)
+  //von vorne, abbruch wenn bereits bekannt
+  def small = viewPages (_.id > latestVideo) (_.id <= latestVideo) (1) (_+1)
   
-  def update(url:String) = {
-      val cond:Cond = {v => url.equalsIgnoreCase(v.url)}
-      viewPages(cond)(cond)
+  //von hinten, alle videos überprüfen ID's behalten
+  def backwards = viewPages (_ => true) (_ => false) (lastPageNumber) (_-1)
+  
+  //lade die letzte Seite, und ermittel die Seitenzahl der Seite.
+  def lastPageNumber: Long = {
+    implicit val doc = result(client.getDOM(Prop("domain") + Prop("pages.url") + Long.MaxValue))
+    (getNodes("pages"):NL).map{ node =>
+      val href = node.attr
+      //seitenzahl aus der url herausholen
+      href.substring(href.lastIndexOf("/")+1).toLong
+    }.foldLeft(Long.MinValue){ (max, n) =>
+      //wenn diese seite größer als das momentane maximum ist
+      if(n > max) n
+      else max
+    }
   }
   
-  def viewPages(examine: Cond)(abort: Cond): Unit = 
-    de.blackpinguin.util.Time.measureAndPrint{
+  //von vorne, solange bis eine bestimmtes Video gefunden wird, nur dieses prüfen
+  def update(url: String): Unit = {
+      val cond:Cond = {v => url.equalsIgnoreCase(v.url)}
+      viewPages (cond) (cond) (1) (_+1)
+  }
+  
+  //updaten anhand der ID
+  def update(id: Int): Unit = {
+    //hole die url für diese id
+    val node = xpath("/indexer[1]/videos[1]/video[@id='" + id + "']")(XML.doc)
+    if(node == null) println("Fehler: kann kein Video für die ID '"+id+"' finden.")
+    else update( node.attr("url").attr )
+  }
+  
+      
+  def hasPage(n: Long)(implicit doc: Document): Boolean = 
+    getNodes("pages").exists(_.attr.equals(Prop("pages.url")+n))
+  
+  
+  def viewPages(examine: Cond)(abort: Cond)(firstPage: =>Long)(nextPage: Long=>Long): Unit = 
+    Time.measureAndPrint{
       val videos = Coll[Future[Video]]()
-      val future = examinePage(1, videos)(examine)(abort)
+      val future = examinePage(firstPage, videos)(examine)(abort)(nextPage)
       waitFor(future)
-      println(videos.size + " neue Videos")
+      println(videos.size + " Videos aktualisiert.")
       videos.foreach(waitFor)
       XML.save
     }
 
-  def examinePage(n: Int, videos: Coll[Future[Video]])(examine: Cond)(abort: Cond): Future[Unit] = {
+  def examinePage(n: Long, videos: Coll[Future[Video]])(examine: Cond)(abort: Cond)(nextPage: Long=>Long): Future[Unit] = {
     for (doc <- client.getDOM(Prop("domain") + Prop("pages.url") + n)) yield {
       implicit val d = doc
       println("Seite " + n + " geladen.")
@@ -121,17 +155,9 @@ object Mediathek {
       }
           
       //existiert überhaupt eine weitere Seite?
-      if(!ende){
-        ende = true
-        for(node <- getNodes("pages")){
-          if(node.attr.equals(Prop("pages.url")+(n+1)))
-            ende = false
-        }
-      }
-      
-      if(!ende)
+      if(!ende && hasPage(nextPage(n)))
         //nächste Seite laden
-        waitFor(examinePage(n + 1, videos)(examine)(abort))
+        waitFor(examinePage(nextPage(n), videos)(examine)(abort)(nextPage))
     }
   }
   

@@ -1,14 +1,15 @@
 package de.blackpinguin
 
+import scala.concurrent.duration.Duration
+import scala.language.implicitConversions
+
 package object mediaindexer {
-  
-  import scala.concurrent.duration.Duration
-  
-  import scala.language.implicitConversions
   
   implicit def int2String(x:Int):String = x.toString
   
   implicit def str2Duration(str: String):Duration = {
+    if(str == null)
+      return null
     var d:Duration = Duration(0, "seconds")
     val comps = str.split(":").map(_.toInt)
     if(comps.length >= 1)
@@ -20,7 +21,7 @@ package object mediaindexer {
     d
   }
   
-  implicit def Duration2Str(d: Duration):String = {
+  implicit def Duration2Str(d: Duration): String = {
     val s = d.toSeconds
     val m = s / 60
     val h = m / 60

@@ -5,14 +5,15 @@ import javax.xml.transform.stream.{StreamSource, StreamResult}
 import java.io.{File, FileOutputStream}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, Await}
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
+import de.blackpinguin.util._
 
 object XSLT {
 
   val key = "javax.xml.transform.TransformerFactory"
   val value = "org.apache.xalan.xsltc.trax.TransformerFactoryImpl"
-  val props = System.getProperties()
+  val props = System.getProperties
   props.put(key, value);
   System.setProperties(props);
 
@@ -57,8 +58,7 @@ object XSLT {
     }
     
     //auf alle Threads warten
-    for(f <- futures)
-    	Await.ready(f, Duration.Inf)
+    futures foreach waitFor
   }
 
   

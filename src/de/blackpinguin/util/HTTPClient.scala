@@ -1,6 +1,6 @@
 package de.blackpinguin.util
 
-import scala.concurrent.{ Future, Promise, Await }
+import scala.concurrent.{ Future, Promise }
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.concurrent.Executor
@@ -35,7 +35,7 @@ trait HTMLCleaner {
 
 object HTTP {
   //Exception wenn HTTP-Anfrage nicht erfolgreich
-  case class StatusException(status: Int) extends RuntimeException
+  case class StatusException(url: String, status: Int) extends RuntimeException
 }
 
 
@@ -78,6 +78,7 @@ object AsyncHTTP extends HTTP {
   
   private[this] val client = ThreadSafe(new AsyncHttpClient(builder.get.build))
   
+  var recover: PartialFunction[Throwable, Unit] = null
 
   protected def get(url: String)(implicit exec: Executor): Future[Response] = {
     val f = client.get.prepareGet(url).setHeader("Accept-Charset", "utf-8").execute()
@@ -88,10 +89,14 @@ object AsyncHTTP extends HTTP {
         if (response.getStatusCode / 100 < 4)
           p.success(response)
         else
-          p.failure(HTTP.StatusException(response.getStatusCode))
+          p.failure(HTTP.StatusException(url, response.getStatusCode))
       }
     }, exec)
-    p.future
+    
+    val fu = p.future
+    if(recover != null)
+      fu.onFailure(recover)
+    fu  
   }
 
 }
@@ -106,7 +111,7 @@ object SyncHTTP extends HTTP {
 
   def get(url: String)(implicit exec: Executor): Future[Response] = {
     val f = AsyncHTTP.getResponse(url)
-    Await.ready(f, maxWaitingTime)
+    waitFor(f)(maxWaitingTime)
     f
   }
 }
@@ -136,7 +141,7 @@ object WebClientTest extends App {
       f
     }
 
-    fs.foreach { f => Await.ready(f, Duration.Inf) }
+    fs.foreach { waitFor(_)(Duration.Inf) }
   }
   
 }

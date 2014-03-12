@@ -80,6 +80,7 @@
 		</xsd:sequence>
 		<xsd:attribute name="id" type="id" use="required" />
 		<xsd:attribute name="url" type="url" use="required" />
+		<xsd:attribute name="title" type="url" use="xsd:string" />
 		<xsd:attribute name="date" type="date" use="required" />
 		<xsd:attribute name="pubdate" type="date" use="required" />
 		<xsd:attribute name="duration" type="duration" use="optional" />

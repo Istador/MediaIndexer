@@ -56,10 +56,16 @@ object XML {
 
     println("videos.xml updated.")
   }
-
-  def remove(url: String): Unit = this.synchronized {
-    val video: N = xpath("/indexer[1]/videos[1]/video[@url='" + url + "']")
-    if (video == null) println("Warning: URL " + url + " is not present")
+  
+  def remove(id: Int): Unit = 
+    remove(xpath("/indexer[1]/videos[1]/video[@id='" + id + "']"))
+  
+  def remove(url: String): Unit = 
+    remove(xpath("/indexer[1]/videos[1]/video[@url='" + url + "']"))
+  
+  private[this] def remove(video: N): Unit = {
+    
+    if (video == null) println("Warnung: dieses Video existiert nicht.")
     else {
       //hole die id des Videos das zur url gehört
       val id = video.attr("id").attr
@@ -73,7 +79,7 @@ object XML {
       //alle <vref>'s auf das Video finden
       val vrefs: NL = xpath("//vref[@id=" + id + "]")
 
-      println("removing URL " + url + " at " + vrefs.size + " places")
+      println("removing video at " + vrefs.size + " places")
 
       //alle <vref>'s entfernen
       for (v <- vrefs) {
@@ -129,6 +135,7 @@ object XML {
 
     node.attr("id", vl.id)
     node.attr("url", vl.url)
+    node.attr("title", vl.title)
     node.attr("date", vl.date)
     node.attr("pubdate", vl.pubDate)
     node.attr("author", vl.author)
