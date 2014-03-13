@@ -9,7 +9,7 @@ object Main {
     Properties.load(new File("user.conf"))
 
     if (args.length == 0) {
-      smart
+      reset
     } else if (args.length == 1) {
       args(0) match {
         case "help" => printUsage

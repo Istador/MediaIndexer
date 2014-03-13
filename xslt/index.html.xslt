@@ -63,15 +63,6 @@
 			<xsl:with-param name="replace" select="' um '" />
 		</xsl:call-template> Uhr, mit einem Program von <a href="https://blackpinguin.de/" target="_blank">Robin C. Ladiges</a>.</p>
 	</footer>
-	<!-- mit Scala, Java, XML, XSLT, HTML, JavaScript und CSS. -->
-	<!-- unter Verwendung von:
-		AsyncHttpClient
-		HtmlCleaner
-		Xalan-Java
-		Apache Commons Lang
-		(slf4j)
-	-->
-	<!-- Version 3 (2014-03-09) -->
 </body>
 </html>
 </xsl:template>
