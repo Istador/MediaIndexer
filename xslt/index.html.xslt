@@ -20,6 +20,10 @@
 
 
 
+<xsl:variable name="relPath" select="/indexer[1]/index[1]/layer[1]/@relPath" />
+<xsl:variable name="docTitle"><xsl:if test="not($relPath) or $relPath = ''">Alle Videos</xsl:if><xsl:if test="$relPath"><xsl:value-of select="/indexer[1]/index[1]/layer[1]/@name" /></xsl:if></xsl:variable>
+
+
 <xsl:strip-space elements="*"/>
 
 
@@ -27,29 +31,62 @@
 <xsl:template match="/">
 <html lang="de">
 <head>
-	<title>Videoindex - Mediathek - DMI - HAW Hamburg</title>
-	<script type="text/javascript" src="jquery-1.10.2.min.js"></script>      
-	<script type="text/javascript" src="script.js"></script>
-	<link rel="stylesheet" type="text/css" href="style.css"/>
-	<link rel="alternate" type="application/rss+xml" title="Alle Videos (RSS)" href="feed.rss" />
+	<title>
+		<xsl:value-of select="$docTitle" /> - Videoindex
+	</title>
+	<script type="text/javascript" >
+		<xsl:attribute name="src"><xsl:value-of select="$relPath"/>jquery-1.10.2.min.js</xsl:attribute>
+	</script>      
+	<script type="text/javascript">
+		<xsl:attribute name="src"><xsl:value-of select="$relPath"/>script.js</xsl:attribute>
+	</script>
+	<link rel="stylesheet" type="text/css">
+		<xsl:attribute name="href"><xsl:value-of select="$relPath"/>style.css</xsl:attribute>
+	</link>
+	<link rel="alternate" type="application/rss+xml" href="feed.rss">
+		<xsl:attribute name="title"><xsl:value-of select="$docTitle"/> als Feed abonnieren (RSS)</xsl:attribute>
+	</link>
 </head>
 <body>
 	<header>
-		<p>
-			Videoindex - Mediathek - DMI - HAW Hamburg
-			<a class="rss" title="Alle Videos (RSS)" href="feed.rss">
-				<img class="rss" src="rss.png" alt="RSS Icon"/>
-			</a>
-		</p>
+		<span>
+			<xsl:if test="$relPath">
+				<a>
+					<xsl:attribute name="href"><xsl:value-of select="$relPath" /></xsl:attribute>
+					<xsl:attribute name="title">Alle Videos</xsl:attribute>Alle Videos</a>
+				<xsl:text> / </xsl:text>
+				<xsl:for-each select="/indexer[1]/index[1]/parent">
+					<a>
+						<xsl:attribute name="href"><xsl:value-of select="@path" /></xsl:attribute>
+						<xsl:attribute name="title"><xsl:value-of select="@name" /></xsl:attribute>
+						<xsl:value-of select="@name" />
+					</a>
+					<xsl:text> / </xsl:text>
+				</xsl:for-each>
+			</xsl:if>
+			<xsl:value-of select="$docTitle" />
+		</span>
+		<a class="rss" href="feed.rss">
+			<xsl:attribute name="title"><xsl:value-of select="$docTitle"/> als Feed abonnieren (RSS)</xsl:attribute>
+			<!-- <img class="rss" src="rss.png" alt="RSS Icon"/> -->
+		</a>
 	</header>
 	
 	<div id="background">
 		<div id="videocont" class="round"></div>
 	</div>
 	
-	<xsl:for-each select="/indexer[1]/index[1]/layer">
-		<xsl:call-template name="layer" />
-	</xsl:for-each>
+	<xsl:if test="not($relPath) or $relPath = ''">
+		<xsl:for-each select="/indexer[1]/index[1]/layer">
+			<xsl:call-template name="layer" />
+		</xsl:for-each>
+	</xsl:if>
+	
+	<xsl:if test="$relPath">
+		<xsl:for-each select="/indexer[1]/index[1]/layer[1]/layer">
+			<xsl:call-template name="layer" />
+		</xsl:for-each>
+	</xsl:if>
 	
 	<footer>
 		<p>
@@ -74,12 +111,18 @@
 	<!-- Funktionsparameter mit Default-Wert -->
 	<xsl:param name="pathparam" select="@name" />
 
-	<xsl:variable name="path">
+	<xsl:variable name="relPath">
 		<xsl:call-template name="str:replace">
 			<xsl:with-param name="string" select="$pathparam" />
 			<xsl:with-param name="search" select="' '" />
 			<xsl:with-param name="replace" select="'_'" />
 		</xsl:call-template>
+	</xsl:variable>
+	
+	<xsl:variable name="path">
+		<xsl:value-of select="/indexer[1]/index[1]/layer[1]/@absPath"/>
+		<xsl:text>/</xsl:text>
+		<xsl:value-of select="$relPath" />
 	</xsl:variable>
 	
 	<!-- Funktionskörper -->
@@ -92,20 +135,18 @@
 				</input>
 			</xsl:if>
 			
-			<xsl:value-of select="@name"/>
+			<span><xsl:value-of select="@name"/></span>
 			
 			<xsl:if test="not(@checkbox and @checkbox = 'true')">
-				<xsl:text> </xsl:text>
 				<a class="extern">
 					<xsl:attribute name="title"><xsl:value-of select="@name"/></xsl:attribute>
-					<xsl:attribute name="href"><xsl:value-of select="$path"/>/</xsl:attribute>
-					<img class="extern" src="extern.png" alt="Extern Icon"/>
+					<xsl:attribute name="href"><xsl:value-of select="$relPath"/>/</xsl:attribute>
+					<!-- <img class="extern" src="extern.png" alt="Extern Icon"/> -->
 				</a>
-				<xsl:text> </xsl:text>
 				<a class="rss">
 					<xsl:attribute name="title"><xsl:value-of select="@name"/> als Feed abonnieren (RSS)</xsl:attribute>
-					<xsl:attribute name="href"><xsl:value-of select="$path"/>/feed.rss</xsl:attribute>
-					<img class="rss" src="rss.png" alt="RSS Icon"/>
+					<xsl:attribute name="href"><xsl:value-of select="$relPath"/>/feed.rss</xsl:attribute>
+					<!-- <img class="rss" src="rss.png" alt="RSS Icon"/> --> 
 				</a>
 			</xsl:if>
 			
@@ -119,12 +160,13 @@
 					<xsl:if test="@videos and @duration">, </xsl:if>
 					<xsl:if test="@duration">Dauer: <xsl:value-of select="@duration"/></xsl:if>
 				</div>
-			</xsl:if>		
+			</xsl:if>
+			
 			<!-- für alle layer Unterelemente -->
 			<xsl:for-each select="layer">
 				<!-- Rekursionsaufruf mit Parameter -->
 				<xsl:call-template name="layer">
-					<xsl:with-param name="pathparam" select="concat($path, '/', @name)"/>
+					<xsl:with-param name="pathparam" select="concat($relPath, '/', @name)"/>
 				</xsl:call-template>
 			</xsl:for-each>
 		
@@ -190,13 +232,11 @@
 		
 		<!-- Videodauer, falls vorhanden -->
 		<xsl:if test="@duration">
-			<xsl:text> </xsl:text>
 			<span>(<xsl:value-of select="@duration"/>)</span>
 		</xsl:if>
 		
 		<!-- Videodateien -->
 		<xsl:for-each select="file">
-			<xsl:text> </xsl:text>
 			<a target="_blank">
 				<xsl:attribute name="href"><xsl:value-of select="@url"/></xsl:attribute>
 				<xsl:value-of select="concat('[',@type,']')"/>
@@ -204,8 +244,9 @@
 		</xsl:for-each>
 		
 		<!-- Button um den eigebetteten Player zu öffnen -->
-		<xsl:text> </xsl:text>
-		<input type="button" class="videobtn" value="anschauen"/>
+		<a class="videobtn">
+			<!-- <img src="play.png" class="videobtn" /> -->
+		</a>
 		
 	</div>
 </xsl:template>

@@ -29,8 +29,6 @@ var isDetailsSupported = (function(doc) {
 
 
 
-
-
 $(document).ready(function() {if(localStorage){
 
 	// <details> wird vom Browser unterstützt

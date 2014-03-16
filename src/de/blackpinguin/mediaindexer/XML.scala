@@ -11,7 +11,7 @@ import de.blackpinguin.util.Dates._
 object XML {
 
   implicit val file = new File("videos.xml")
-
+  
   if (!file.exists()) {
     val xml =
       <indexer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="videos.xsd" gendate={ DateTime() }>
@@ -22,7 +22,7 @@ object XML {
   }
 
   implicit lazy val doc = DOM.open(file)
-
+  
   val indexNode: N = xpath("/indexer[1]/index[1]")
   val videosNode: N = xpath("/indexer[1]/videos[1]")
 
@@ -34,7 +34,7 @@ object XML {
       add(lay)
       for (vref <- lay.videos)
         add(vref, lay)
-      for (child <- lay.layers)
+      for (child <- lay)
         addLay(child)
     }
 
@@ -43,7 +43,7 @@ object XML {
       indexNode.removeChild(indexNode.getFirstChild)
 
     //index neu erstellen
-    for (lay <- RootLayer.layers)
+    for (lay <- RootLayer)
       addLay(lay)
 
     //Erstellungszeitpunkt
@@ -96,21 +96,9 @@ object XML {
     }
 
     parent.synchronized {
-      var self: N = xpath(lay.xpath)
+      val self: N = xpath(lay.xpath)
       if (self == null) {
-        self = doc.createElement("layer")
-        //Name
-        self.attr("name", lay.name)
-        //Checkbox
-        if (lay.checkbox)
-          self.attr("checkbox", "true")
-        //Gesamtdauer
-        if (lay.duration != null)
-          self.attr("duration", lay.duration)
-        //Anzahl Videos
-        if (lay.videos.size > 0)
-          self.attr("videos", lay.videos.size)
-        parent.appendChild(self)
+        parent.appendChild(lay.toXML)
         //println("Layer: "+lay.name)
       }
     }
@@ -118,44 +106,29 @@ object XML {
 
   def add(vref: VRef, lay: Layer): Unit = {
     val layerNode: N = xpath(lay.xpath)
-    val vrefNode: N = doc.createElement("vref")
-    vrefNode.attr("id", vref.id)
-    vrefNode.attr("title", vref.title)
-    layerNode.appendChild(vrefNode)
+    layerNode.appendChild(vref.toXML)
     //println("Video: "+vref.title)
   }
 
   def add(vl: Video): Unit = {
-    var nodes: NL = xpath("/indexer[1]/videos[1]/video[@url='" + vl.url + "']")
-
-    //<video>-Element erstellen, falls noch nicht vorhanden
-    val node: N =
-      if (nodes.size == 0) doc.createElement("video")
-      else nodes
-
-    node.attr("id", vl.id)
-    node.attr("url", vl.url)
-    node.attr("title", vl.title)
-    node.attr("date", vl.date)
-    node.attr("pubdate", vl.pubDate)
-    node.attr("author", vl.author)
-    if (vl.duration != null)
-      node.attr("duration", vl.duration)
-
-    //lösche alle <file>-Kindelemente
-    while (node.hasChildNodes)
-      node.removeChild(node.getFirstChild)
-
-    //füge <file>-Elemente hinzu
-    vl.files.foreach { vf =>
-      val nFile = doc.createElement("file")
-      nFile.attr("url", vf.url)
-      nFile.attr("type", vf.typ)
-      node.appendChild(nFile)
+    var node: N = xpath("/indexer[1]/videos[1]/video[@url='" + vl.url + "']")
+    
+    //loeschen falls bereits vorhanden
+    if(node != null){
+      node.synchronized {
+        while (node.hasChildNodes)
+          node.removeChild(node.getFirstChild)
+      }
+      videosNode.synchronized {
+        videosNode.removeChild(node)
+      }
     }
 
-    //wenn <video> noch nicht vorhanden war, hinzufügen zu <videos>
-    if (nodes.size == 0) videosNode.synchronized {
+    //<video>-Element erstellen
+    node = vl.toXML
+
+    //hinzufügen zu <videos>
+    videosNode.synchronized {
       videosNode.appendChild(node)
     }
   }

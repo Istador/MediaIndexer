@@ -20,12 +20,22 @@
 
 
 
-<!-- index (layer*) -->
+<!-- index (parent* layer*) -->
 <xsd:element name="index">
 	<xsd:complexType>
 		<xsd:sequence>
+			<xsd:element ref="parent" minOccurs="0" maxOccurs="unbounded" />
 			<xsd:element ref="layer" minOccurs="0" maxOccurs="unbounded" />
 		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+
+
+<!-- parent -->
+<xsd:element name="parent">
+	<xsd:complexType>
+		<xsd:attribute name="name" type="xsd:string" use="required" />
 	</xsd:complexType>
 </xsd:element>
 
@@ -45,6 +55,8 @@
 		<xsd:attribute name="checkbox" type="bool" use="optional" />
 		<xsd:attribute name="videos" type="count" use="optional" />
 		<xsd:attribute name="duration" type="duration" use="optional" />
+		<xsd:attribute name="relPath" type="xsd:string" use="optional" />
+		<xsd:attribute name="absPath" type="xsd:string" use="optional" />
 	</xsd:complexType>
 </xsd:element>
 
@@ -80,7 +92,7 @@
 		</xsd:sequence>
 		<xsd:attribute name="id" type="id" use="required" />
 		<xsd:attribute name="url" type="url" use="required" />
-		<xsd:attribute name="title" type="url" use="xsd:string" />
+		<xsd:attribute name="title" type="xsd:string" use="required" />
 		<xsd:attribute name="date" type="date" use="required" />
 		<xsd:attribute name="pubdate" type="date" use="required" />
 		<xsd:attribute name="duration" type="duration" use="optional" />

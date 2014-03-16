@@ -74,6 +74,9 @@ object Mediathek {
   client.recover = {
       case HTTP.StatusException(url, status) =>
         println("Fehler beim Laden von '"+url+"'. HTTP Status Code: "+status)
+      case e: java.net.ConnectException =>
+        println("Fehler beim Verbindungsaufbau: ")
+        e.printStackTrace
   }
   
   val latestVideo = Video.latest
@@ -122,8 +125,7 @@ object Mediathek {
     getNodes("pages").exists(_.attr.equals(Prop("pages.url")+n))
   
   
-  def viewPages(examine: Cond)(abort: Cond)(firstPage: =>Long)(nextPage: Long=>Long): Unit = 
-    Time.measureAndPrint{
+  def viewPages(examine: Cond)(abort: Cond)(firstPage: =>Long)(nextPage: Long=>Long): Unit = {
       val videos = Coll[Future[Video]]()
       val future = examinePage(firstPage, videos)(examine)(abort)(nextPage)
       waitFor(future)

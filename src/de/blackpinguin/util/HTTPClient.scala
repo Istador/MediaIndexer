@@ -84,12 +84,14 @@ object AsyncHTTP extends HTTP {
     val f = client.get.prepareGet(url).setHeader("Accept-Charset", "utf-8").execute()
     val p = Promise[Response]()
     f.addListener(new Runnable {
-      def run = {
+      def run = try {
         val response = f.get
         if (response.getStatusCode / 100 < 4)
           p.success(response)
         else
           p.failure(HTTP.StatusException(url, response.getStatusCode))
+      } catch {
+        case t:Throwable => p.failure(t)
       }
     }, exec)
     

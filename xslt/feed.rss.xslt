@@ -16,12 +16,27 @@
 <xsl:variable name="maxFeedVideos" select="number(50)" />
 <xsl:variable name="lastid" select="number(/indexer[1]/videos[1]/@latest)" />
 
+<xsl:variable name="relPath" select="/indexer[1]/index[1]/layer[1]/@relPath" />
+<xsl:variable name="docTitle">
+	<xsl:choose>
+		<xsl:when test="not($relPath) or $relPath = ''">Alle Videos</xsl:when>
+		<xsl:otherwise>
+			<xsl:for-each select="/indexer[1]/index[1]/parent">
+				<xsl:value-of select="@name"/>
+				<xsl:text> / </xsl:text>
+			</xsl:for-each>
+			<xsl:value-of select="/indexer[1]/index[1]/layer[1]/@name"></xsl:value-of>
+		</xsl:otherwise>
+	</xsl:choose>
+</xsl:variable>
+
+
 <xsl:template match="/">
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
 	<channel>
-		<title>Videoindex - Mediathek - DMI - HAW Hamburg</title>
+		<title><xsl:value-of select="$docTitle"/></title>
 		<link>http://weitz.de/haw-videos/</link>
-		<description>Ein Index aller Video Links der Mediathek der Fakultät DMI der HAW Hamburg</description>
+		<description>Ein Index von Video Links der Mediathek der Fakultät DMI der HAW Hamburg</description>
 		<language>de-DE</language>
 		<generator>XSLT</generator>
 		

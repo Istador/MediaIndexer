@@ -7,7 +7,14 @@
 
 
 
-<!ELEMENT index (layer*)>
+<!ELEMENT index (parent*, layer*)>
+
+
+
+<!ELEMENT parent EMPTY>
+<!ATTLIST parent
+	name		CDATA #REQUIRED
+>
 
 
 
@@ -17,6 +24,8 @@
 	checkbox	CDATA #IMPLIED
 	videos		CDATA #IMPLIED
 	duration	CDATA #IMPLIED
+	relPath		CDATA #IMPLIED
+	absPath		CDATA #IMPLIED
 >
 
 

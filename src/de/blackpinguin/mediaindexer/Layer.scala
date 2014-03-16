@@ -1,8 +1,17 @@
 package de.blackpinguin.mediaindexer
 
 import scala.concurrent.duration.Duration
+import org.w3c.dom.Document
+import de.blackpinguin.util.DOM._
 
-case class VRef(id:Int, title:String)
+case class VRef(id:Int, title:String){
+  def toXML(implicit doc: Document): N = {
+    val node: N = doc.createElement("vref")
+    node.attr("id", id)
+    node.attr("title", title)
+    node
+  }
+}
 
 object Layer {
   
@@ -73,14 +82,33 @@ object RootLayer extends Layer(None, "", false) {
   override protected val self: Option[Layer] = None
 }
 
-class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Boolean = false) {
+class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Boolean = false) extends Iterable[Layer] {
 
+  var changed: Boolean = false
+  
+  def needChange: Unit = {
+    changed = true
+    for(lay <- this)
+      lay.needChange
+  }
+  
+  def hasChanged: Unit = {
+    changed = true
+    parent match {
+      case Some(p) => p.hasChanged
+      case None => 
+    }
+  }
+  
+  
   var duration: Duration = null
   
   //child Layers
   var layers = Array[Layer]()
   var layernames = Map[String, Layer]()
-
+  
+  def iterator = layers.iterator
+  
   //child Layers hinzufügen
   protected[Layer] def add(lay: Layer) = {
     this.synchronized {
@@ -94,7 +122,8 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   
   //child Layers abfragen und notfalls erstellen
   def getLayer(lay: (String, Boolean)): Layer = getLayer(lay._1, lay._2)
-  def getLayer(name: String, cb: Boolean = false): Layer =
+  def getLayer(name: String, cb: Boolean = false): Layer = {
+    hasChanged
     if(name == null)
       null
     else if (layernames.contains(name)) 
@@ -104,6 +133,7 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
       add(lay)
       lay
     }
+  }
 
   //natürliche Ordnung für Layers
   lazy val vOrder = Layer.vOrder(this)
@@ -124,6 +154,7 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   
   //child Video hinzufügen
   def add(v: Video, title: String): Unit = {
+    hasChanged
     val vref = VRef(v.id, title)
     //Videodauer aufaddieren
     if(!titles.contains(vref.id)){
@@ -132,6 +163,10 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
     }
     add(vref)
   }
+  
+  //enhält dieser Layer, oder eines deren Kinder, ein Video mit der ID?
+  def containsVideoID(id: Int): Boolean = 
+    titles.keySet.contains(id) || exists(_.containsVideoID(id))
 
   //vollständiger Pfad dieses Layers
   lazy val path: Array[String] = parent match {
@@ -142,4 +177,18 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   lazy val xpath: String =
     "/indexer[1]/index[1]/layer[@name='" + path.mkString("']/layer[@name='") + "']"
 
+  def toXML(implicit doc: Document): N = {
+    val node: N = doc.createElement("layer")
+    
+    node.attr("name", name)
+    if (checkbox)
+      node.attr("checkbox", "true")
+    if (duration != null)
+      node.attr("duration", duration)
+    if (videos.size > 0)
+      node.attr("videos", videos.size)
+    
+    node
+  }
+    
 }

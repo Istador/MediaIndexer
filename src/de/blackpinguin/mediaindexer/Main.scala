@@ -6,10 +6,15 @@ import de.blackpinguin.util._
 object Main {
 
   def main(args: Array[String]): Unit = {
+    val (_, time) = Time.measure{ submain(args) }
+    println("Gesamtdauer: "+Time.toStr(time))
+  }
+  
+  def submain(args: Array[String]): Unit = {
     Properties.load(new File("user.conf"))
 
     if (args.length == 0) {
-      reset
+      smart
     } else if (args.length == 1) {
       args(0) match {
         case "help" => printUsage
@@ -22,7 +27,7 @@ object Main {
         case "-small" => small
         case "-smart" => smart
         case "-full" => full
-        case "-xslt" => xslt
+        case "-xslt" => xsltAlone
 
         case _ => printUsage
       }
@@ -50,61 +55,76 @@ object Main {
   }
 
   //verwende index und video aus xml datei, suche nach neuen videos, breche ab bei bekannten videos
-  def small { 
-    println("Aktion: vorhandenen Index laden.")
-    Time.measureAndPrint {Layer.init;}
-    println("Aktion: suche neue Videos.")
-    Mediathek.small;
+  def small {
+    Aktion("Index laden", "aus der XML-Datei") := 
+      Layer.init
+    Aktion("Suche neue Videos", "solange bis ein altes gefunden wird") := 
+      Mediathek.small
     xslt
   }
 
   def smart {
-    //für alle vorhandenen Videos die Layer neu berechnen
+    
     import XML.doc
     import DOM._
 
-    println("Aktion: Index neu generieren.")
-    Time.measureAndPrint {
+    Aktion("Index neu generieren", "ermittelt für alle alten Videos die Layer neu") := {
       for (node <- XML.videosNode.getChildNodes) {
         //Video-Objekt aus den Daten in der XML-Datei erstellen
         val video = Video.fromXML(node)
-
         //layers ermitteln und zum <index> hinzufügen
         ConfigEntry.layers(video)
       }
     }
     
-    //Suchen nach neuen Videos
-    small //TODO BUG: nicht smart, da dort der index wieder geladen wird.
+    Aktion("Suche neue Videos", "solange bis ein altes gefunden wird") :=
+      Mediathek.small
+    
+    xslt
   }
 
   //verwende video id's aus xml datei, update alle videos, generiere index neu.
   def full {
-    println("Aktion: aktualisiere alle Videos.")
-    Mediathek.full;
+    Aktion("Aktuallisiere alle Videos", "behält die IDs") :=
+      Mediathek.full
+    
     xslt
   }
 
   //lösche xml datei und erstelle alles neu. traversiere die seiten von der letzten zur ersten.
   def reset {
     //XML-Datei löschen falls vorhanden
-    println("Aktion: lösche videos.xml.")
-    val f = new File("videos.xml")
-    if (f.exists)
-      f.delete
+    Aktion("Lösche XML-Datei") := {
+      val f = new File("videos.xml")
+      if (f.exists)
+        f.delete
+    }
+    
     //volle suche von hinten nach vorne, damit die ID's grob richtig geordnet sind
-    println("Aktion: suche neue Videos.")
-    Mediathek.backwards
+    Aktion("Suche neue Videos", "vollständig, von letzter zur ersten Seite") :=
+      Mediathek.backwards
+      
     xslt
   }
 
+  def xsltAlone {
+    Aktion("Index laden", "aus der XML-Datei") := 
+      Layer.init
+    RootLayer.needChange
+    xslt
+  }
+  
   /*
    * erstellt aus der bereits vorhandenen xml datei mittels xslt dateien den output neu.
    * die mediathek wird nicht mit http requests belästigt
    */
   def xslt {
-    println("Aktion: generiere Output mittels XSLT.")
-    Time.measureAndPrint { XSLT() }
+    Aktion("Generiere Output mittels XSLT") := {
+      val xmlFile = XSLT()
+      val layers = XSLT.forEachLayer
+      waitFor(xmlFile)
+      waitFor(layers)
+    }
   }
 
   /*
@@ -112,19 +132,24 @@ object Main {
    * dabei wird die mediathek seite für seite durchsucht, um auch eine veränderte 
    * dauer mitzubekommen.
    */
-  def update(str: String) = {
-    println("Aktion: suche und aktualisiere ein einzelnes Video.")
-    intOrString(str)(Mediathek.update)(Mediathek.update)
+  def update(str: String) {
+    Aktion("Aktuallisiere ein einzelnes Video") :=
+      intOrString(str)(Mediathek.update)(Mediathek.update)
+    
+    xslt
   }
 
   /*
    * entfernt ein einzelnes video komplett aus der xml-datei
    */
-  def remove(str: String) = {
-    println("Aktion: lösche ein einzelnes Video.")
-    intOrString(str)(XML.remove)(XML.remove)
+  def remove(str: String) {
+    Aktion("Entferne ein einzelnes Video") :=
+      intOrString(str)(XML.remove)(XML.remove)
+    
+    xslt
   }
 
+  
   def intOrString(str: String)(intOp: Int => Unit)(strOp: String => Unit) {
     try {
       val id = str.toInt

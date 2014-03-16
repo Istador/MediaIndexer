@@ -30,7 +30,11 @@ object Time {
   
   def measureAndPrint[A](f: => A): A = {
     var (result, time) = measure(f)
-
+    println("Time: " + toStr(time))
+    result
+  }
+  
+  def toStr(time: Long): String = {
     var out = Output(time / 1000, "µs", time % 1000, "ns")
     out = next(out, 1000, "ms")
 
@@ -40,10 +44,22 @@ object Time {
       out = next(out, 60, "h")
     }
 
-    println("Time: " + out)
-    result
+    out.toString
   }
   
+}
+
+case class Aktion(name: String, text: String = null){
   
+  def :=[A](f: =>A): A =  {
+    print("Aktion: "+name)
+    if(text != null)
+      print(" ("+text+")")
+    println("")
+    val (a, time) = Time.measure(f)
+    println("Dauer von "+name+": "+Time.toStr(time))
+    a
+  }
   
 }
+

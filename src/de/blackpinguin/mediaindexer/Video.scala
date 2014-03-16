@@ -2,10 +2,18 @@ package de.blackpinguin.mediaindexer
 
 import scala.concurrent.duration.Duration
 import de.blackpinguin.util.DOM._
+import org.w3c.dom.Document
 
 
 case class VFile(url: String, _typ:String){
   lazy val typ: String = _typ.split("/")(1)
+  
+  def toXML(implicit doc: Document): N = {
+    val node = doc.createElement("file")
+    node.attr("url", url)
+    node.attr("type", typ)
+    node
+  }
 }
 
 
@@ -57,7 +65,7 @@ object Video {
 
 
 
-case class Video(val url: String) {
+case class Video(val url: String) extends Iterable[VFile] {
   
   import de.blackpinguin.util.Dates._
   
@@ -99,6 +107,27 @@ case class Video(val url: String) {
     files += file
   }
   
+  def iterator: Iterator[VFile] = files.iterator
+  
+  def toXML(implicit doc: Document): N = {
+    val node: N = doc.createElement("video")
+    node.attr("id", id)
+    node.attr("url", url)
+    node.attr("title", title)
+    node.attr("date", date)
+    node.attr("pubdate", pubDate)
+    node.attr("author", author)
+    
+    if (duration != null)
+      node.attr("duration", duration)
+    
+    //füge <file>-Elemente hinzu
+    this.foreach {
+      node appendChild _.toXML
+    }
+    
+    node
+  }
   
 }
 

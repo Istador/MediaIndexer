@@ -1,7 +1,8 @@
 body {
 	font-family: serif ;
+	font-size: 1em;
+	line-height: 1em;
 }
-
 
 details, details div, details div div {
 	margin: 2px 0px;
@@ -11,40 +12,53 @@ details div, details div div  {
 	margin-left: 20px;
 }
 
-
 p {
 	margin: 10px 0px;
 }
 
-/*
-	Quelle: http://mathiasbynens.be/notes/html5-details-jquery
-*/
-
-summary { cursor: pointer; }
 details, summary { display: block; }
+summary {cursor: pointer;}
 
 /* Add focus styles (for keyboard accessibility) */
 summary:hover { background: #aaa; }
 summary:focus { border-color: orange; }
 
-header {
-	font-size: 1.25em;
+details div div a, details div div span {
+	margin-left: 3px;
 }
 
-a.rss, a.extern {
+.rss, .extern, .videobtn {
 	display: inline-block;
 	vertical-align: middle;
-}
-
-img.rss, img.extern {
+	
+	cursor: pointer;
+	
 	height: 1em;
-	width: auto;
-	border: 0px;
+	width: 1em;
+	
+	margin-left: 3px;
+	
+	background-size: 100% 100%;
+	
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 
-header a img {
+.rss { background-image: url(rss.png); }
+.extern { background-image: url(extern.png); }
+.videobtn { background-image: url(play.png); }
+
+header {
+	font-size: 1.25em;
+	line-height: 1.25em;
+}
+
+header a.rss {
 	height: 1.25em;
-	width: auto;
+	width: 1.25em;
 }
 
 
