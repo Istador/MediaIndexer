@@ -2,12 +2,37 @@ package de.blackpinguin.mediaindexer
 
 import java.io.{File, FileReader, BufferedReader}
 
+import de.blackpinguin.util.Properties
+
 object ConfigEntry{
+  
+  Properties.addDefault(Map(
+        ("unmatched.show", "true")
+      , ("unmatched.conf", """"\A(.*)\z", "\semester", false, "Unsortiert", false, "\1", true""")
+  ))
   
   val file = new File("match.conf")
   
-  lazy val entries = {
-    val r = scala.collection.mutable.MutableList[ConfigEntry]()
+  val showUnmatched = Properties("unmatched.show").toBoolean
+  lazy val unmatched = parse(Properties("unmatched.conf"))
+  
+  def parse(entry: String): ConfigEntry  = {
+    val split = entry.split(",")
+    val matchy = split(0).trim
+      
+    def toupled(i: Int = 1, accu: List[(String,Boolean)] = List[(String,Boolean)]()): List[(String,Boolean)] = {
+      if(i >= split.length) accu
+      else {
+        val a = split(i).trim
+        val b = split(i+1).trim
+        toupled(i+2, accu :+ (a.substring(1, a.length-1), b.toBoolean))
+      }
+    }  
+    ConfigEntry(matchy.substring(1, matchy.length - 1), toupled())
+  }
+  
+  lazy val entries: List[ConfigEntry] = {
+    //lese die ganze Datei als String ein
     val br = new BufferedReader(new FileReader(file)) 
     var str = ""
     var reading = true
@@ -17,33 +42,23 @@ object ConfigEntry{
       else str += n
     }
     
-    for(entry <- str.split(";")){
-      val split = entry.split(",")
-      val matchy = split(0).trim
-      
-      def toupled(i:Int = 1, accu:List[(String,Boolean)] = List[(String,Boolean)]()):List[(String,Boolean)] = {
-        if(i >= split.length) accu
-        else {
-          val a = split(i).trim
-          val b = split(i+1).trim
-          toupled(i+2, accu :+ (a.substring(1, a.length-1), b.toBoolean))
-        }
-      }
-      
-      r += ConfigEntry(matchy.substring(1, matchy.length - 1), toupled())
-    }
-    
-    r.toList
+    //parse die Config Datei
+    for(entry <- str.split(";").toList)
+      yield parse(entry)
   }
   
   //alle Layer eines Videos ermitteln
   def layers(video: Video): List[Layer] = {
-    var layers = List[Layer]()
-    for{
+    val layers = for{
       entry <- entries
       layer = entry.layer(video)
       if(layer != null)
     } yield layer
+    
+    if(layers.size==0 && showUnmatched)
+      List(unmatched.layer(video))
+    else
+      layers
   }
   
 }

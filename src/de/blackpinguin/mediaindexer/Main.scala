@@ -6,15 +6,26 @@ import de.blackpinguin.util._
 object Main {
 
   def main(args: Array[String]): Unit = {
-    val (_, time) = Time.measure{ submain(args) }
-    println("Gesamtdauer: "+Time.toStr(time))
+    try{
+      val (_, time) = Time.measure{ submain(args) }
+      println("Gesamtdauer: "+Time.toStr(time))
+    } catch {
+      case t:Throwable => LogError(t) := "Unbehandelte Exception"
+    }
+    //Fehlermeldung ausgeben
+    if(LogError.errors == 1)
+      System.err.println("Es ist ein Fehler aufgetreten. Siehe './error.log' für mehr Details.")
+    else if(LogError.errors > 1)
+      System.err.println("Es sind "+LogError.errors+" Fehler aufgetreten. Siehe './error.log' für mehr Details.")
+    LogError.close
   }
   
   def submain(args: Array[String]): Unit = {
+    //Konfigurationsdatei laden
     Properties.load(new File("user.conf"))
 
     if (args.length == 0) {
-      smart
+      small
     } else if (args.length == 1) {
       args(0) match {
         case "help" => printUsage
@@ -42,7 +53,7 @@ object Main {
   }
 
   def printUsage = {
-    println("MediaIndexer\t\t\tsmal run")
+    println("MediaIndexer\t\t\tsmall run")
     println("MediaIndexer -small\t\tsearch for new videos, abort on an old video.")
     println("MediaIndexer -smart\t\tgenerate the index again for old videos and make a small search.")
     println("MediaIndexer -full\t\tupdate all videos, keeping only the IDs.")
@@ -54,20 +65,15 @@ object Main {
     println("MediaIndexer -remove ID\tremove a single video")
   }
 
-  //verwende index und video aus xml datei, suche nach neuen videos, breche ab bei bekannten videos
-  def small {
+  def loadIndex {
     Aktion("Index laden", "aus der XML-Datei") := 
       Layer.init
-    Aktion("Suche neue Videos", "solange bis ein altes gefunden wird") := 
-      Mediathek.small
-    xslt
   }
-
-  def smart {
-    
+  
+  def genIndex {
     import XML.doc
     import DOM._
-
+    
     Aktion("Index neu generieren", "ermittelt für alle alten Videos die Layer neu") := {
       for (node <- XML.videosNode.getChildNodes) {
         //Video-Objekt aus den Daten in der XML-Datei erstellen
@@ -76,6 +82,21 @@ object Main {
         ConfigEntry.layers(video)
       }
     }
+  }
+  
+  //verwende index und video aus xml datei, suche nach neuen videos, breche ab bei bekannten videos
+  def small {
+    
+    loadIndex
+    
+    Aktion("Suche neue Videos", "solange bis ein altes gefunden wird") := 
+      Mediathek.small
+    xslt
+  }
+
+  def smart {
+    
+    genIndex
     
     Aktion("Suche neue Videos", "solange bis ein altes gefunden wird") :=
       Mediathek.small
@@ -108,8 +129,7 @@ object Main {
   }
 
   def xsltAlone {
-    Aktion("Index laden", "aus der XML-Datei") := 
-      Layer.init
+    loadIndex
     RootLayer.needChange
     xslt
   }
@@ -121,7 +141,7 @@ object Main {
   def xslt {
     Aktion("Generiere Output mittels XSLT") := {
       val xmlFile = XSLT()
-      val layers = XSLT.forEachLayer
+      val layers = SubPages()
       waitFor(xmlFile)
       waitFor(layers)
     }

@@ -83,8 +83,21 @@
 	</xsl:if>
 	
 	<xsl:if test="$relPath">
-		<xsl:for-each select="/indexer[1]/index[1]/layer[1]/layer">
-			<xsl:call-template name="layer" />
+		<xsl:for-each select="/indexer[1]/index[1]/layer">
+			<xsl:variable name="temp">
+				<xsl:call-template name="str:replace">
+					<xsl:with-param name="string" select="@name" />
+					<xsl:with-param name="search" select="' '" />
+					<xsl:with-param name="replace" select="'_'" />
+				</xsl:call-template>
+			</xsl:variable>
+		
+			<xsl:call-template name="layerDiv">
+				<xsl:with-param name="path">
+					<xsl:value-of select="/indexer[1]/index[1]/layer[1]/@absPath"/>
+				</xsl:with-param>
+				<xsl:with-param name="accuPath" select="''"/>
+			</xsl:call-template>
 		</xsl:for-each>
 	</xsl:if>
 	
@@ -111,7 +124,7 @@
 	<!-- Funktionsparameter mit Default-Wert -->
 	<xsl:param name="pathparam" select="@name" />
 
-	<xsl:variable name="relPath">
+	<xsl:variable name="accuPath">
 		<xsl:call-template name="str:replace">
 			<xsl:with-param name="string" select="$pathparam" />
 			<xsl:with-param name="search" select="' '" />
@@ -120,9 +133,11 @@
 	</xsl:variable>
 	
 	<xsl:variable name="path">
-		<xsl:value-of select="/indexer[1]/index[1]/layer[1]/@absPath"/>
-		<xsl:text>/</xsl:text>
-		<xsl:value-of select="$relPath" />
+		<xsl:if test="$relPath">
+			<xsl:value-of select="/indexer[1]/index[1]/layer[1]/@absPath"/>
+			<xsl:text>/</xsl:text>
+		</xsl:if>
+		<xsl:value-of select="$accuPath" />
 	</xsl:variable>
 	
 	<!-- Funktionskörper -->
@@ -140,48 +155,65 @@
 			<xsl:if test="not(@checkbox and @checkbox = 'true')">
 				<a class="extern">
 					<xsl:attribute name="title"><xsl:value-of select="@name"/></xsl:attribute>
-					<xsl:attribute name="href"><xsl:value-of select="$relPath"/>/</xsl:attribute>
+					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/</xsl:attribute>
 					<!-- <img class="extern" src="extern.png" alt="Extern Icon"/> -->
 				</a>
 				<a class="rss">
 					<xsl:attribute name="title"><xsl:value-of select="@name"/> als Feed abonnieren (RSS)</xsl:attribute>
-					<xsl:attribute name="href"><xsl:value-of select="$relPath"/>/feed.rss</xsl:attribute>
+					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/feed.rss</xsl:attribute>
 					<!-- <img class="rss" src="rss.png" alt="RSS Icon"/> --> 
 				</a>
 			</xsl:if>
 			
 		</summary>
 		
-		<div>
-			<xsl:if test="@videos or @duration">
-				<div>
-					<!-- Videoanzahl -->
-					<xsl:if test="@videos">Anzahl Videos: <xsl:value-of select="@videos"/></xsl:if>
-					<xsl:if test="@videos and @duration">, </xsl:if>
-					<xsl:if test="@duration">Dauer: <xsl:value-of select="@duration"/></xsl:if>
-				</div>
-			</xsl:if>
-			
-			<!-- für alle layer Unterelemente -->
-			<xsl:for-each select="layer">
-				<!-- Rekursionsaufruf mit Parameter -->
-				<xsl:call-template name="layer">
-					<xsl:with-param name="pathparam" select="concat($relPath, '/', @name)"/>
-				</xsl:call-template>
-			</xsl:for-each>
-		
-			<!-- für alle vref Unterelemente -->
-			<xsl:for-each select="vref">
-				<!-- Funktionsaufruf mit Parameter -->
-				<xsl:call-template name="vref">
-					<xsl:with-param name="pathparam" select="$path"/>
-				</xsl:call-template>
-			</xsl:for-each>
-		</div>
+		<xsl:call-template name="layerDiv">
+			<xsl:with-param name="path" select="$path"/>
+			<xsl:with-param name="accuPath" select="$accuPath"/>
+		</xsl:call-template>
 		
 	</details>
 </xsl:template>
 
+
+
+
+<xsl:template name="layerDiv">
+	<xsl:param name="path" />
+	<xsl:param name="accuPath" />
+	
+	<div>
+		<xsl:if test="@videos or @duration">
+			<div>
+				<!-- Videoanzahl -->
+				<xsl:if test="@videos">Anzahl Videos: <xsl:value-of select="@videos"/></xsl:if>
+				<xsl:if test="@videos and @duration">, </xsl:if>
+				<xsl:if test="@duration">Dauer: <xsl:value-of select="@duration"/></xsl:if>
+			</div>
+		</xsl:if>
+			
+		<!-- für alle layer Unterelemente -->
+		<xsl:for-each select="layer">
+			<!-- Rekursionsaufruf mit Parameter -->
+			<xsl:call-template name="layer">
+				<xsl:with-param name="pathparam">
+					<xsl:if test="$accuPath">
+						<xsl:value-of select="concat($accuPath, '/')"/>
+					</xsl:if>
+					<xsl:value-of select="@name"/>
+				</xsl:with-param>
+			</xsl:call-template>
+		</xsl:for-each>
+		
+		<!-- für alle vref Unterelemente -->
+		<xsl:for-each select="vref">
+			<!-- Funktionsaufruf mit Parameter -->
+			<xsl:call-template name="vref">
+				<xsl:with-param name="pathparam" select="$path"/>
+			</xsl:call-template>
+		</xsl:for-each>
+	</div>
+</xsl:template>
 
 
 <!-- Funktion: Finden und Ausgeben eines Videos anhand der ID -->

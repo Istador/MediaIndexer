@@ -12,7 +12,7 @@ object XML {
 
   implicit val file = new File("videos.xml")
   
-  if (!file.exists()) {
+  if (!file.exists) {
     val xml =
       <indexer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="videos.xsd" gendate={ DateTime() }>
         <index/>

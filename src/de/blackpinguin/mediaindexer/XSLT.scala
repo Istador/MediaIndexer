@@ -8,7 +8,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import de.blackpinguin.util._
-import de.blackpinguin.util.DOM._
 import javax.xml.transform.dom.DOMSource
 
 object XSLT {
@@ -22,10 +21,10 @@ object XSLT {
   def createDir(name: String, parent: File = new File(".")): File = {
     val dir = new File(parent, name)
     if(dir.exists && !dir.isDirectory)
-    	throw new RuntimeException("Error: '"+parent.getPath+"/"+name+"' is not a directory.")
+    	throw new RuntimeException("Fehler: '"+parent.getPath+"' ist kein Ordner.")
     if(!dir.exists)
       if(!dir.mkdir)
-        println("Fehler: kann Ordner '"+dir.getCanonicalPath+"' nicht erstellen")
+        println("Fehler: kann Ordner '"+dir.getPath+"' nicht erstellen")
     dir
   }
   
@@ -94,73 +93,15 @@ object XSLT {
 
   def apply(xml: StreamSource, xslt: File, out: File): Unit = {
     try {
-      out.delete()
+      out.delete
       val tFactory = TransformerFactory.newInstance
       val transformer = tFactory.newTransformer(new StreamSource(xslt))
       transformer.transform(xml, new StreamResult(new FileOutputStream(out)))
       println(out.getPath + " generated.")
     } catch{
-      case _:Throwable => println("Error: generating '"+out.getName+"' using '"+xslt.getName+"'.")
+      case _:Throwable => throw new RuntimeException("Error: generating '"+out.getPath+"' using '"+xslt.getPath+"'.")
     }
-  }
-
-  def createLayer(lay: Layer, depth: Int, empty: Unit=>Document): Future[Unit] = Future {
-    implicit val doc = empty()
-    val index: N = xpath("/indexer[1]/index[1]")
-    val videos: N = xpath("/indexer[1]/videos[1]")
-    
-    def addLay(layer: Layer, parent: N): Unit = {
-      val node = layer.toXML
-      
-      parent.appendChild(node)
-      
-      for(vref <- layer.videos)
-        node.appendChild(vref.toXML)
-    
-      for(child <- layer)
-        addLay(child, node)
-    }
-    
-    for(i <- 0 until lay.path.length-1)
-      index.appendChild{
-        val n:N = doc.createElement("parent")
-        n.attr("name", lay.path(i))
-        n.attr("path", (0 until (lay.path.length - i - 1) ).map(_=>"..").mkString("/") + "/")
-        n
-      }
-    
-    addLay(lay, index)
-    
-    val relPath = (0 until depth).map(_=>"..").mkString("/") + "/"
-    val first = xpath("/indexer[1]/index[1]/layer[1]") 
-    first.attr("relPath", relPath)
-    first.attr("absPath", lay.path.map(_.replace(" ","_")).mkString("/"))
-    
-    waitFor(apply(doc, lay.path.map{_.replace(" ", "_")}.toList))
   }
   
-  def forEachLayer: Future[Unit] = Future {
-    implicit val doc = XML.doc.copy
-    val index: N = xpath("/indexer[1]/index[1]")
-    val videos: N = xpath("/indexer[1]/videos[1]")
-    while (index.hasChildNodes)
-      index.removeChild(index.getFirstChild)
-    
-    val empty: Unit=>Document = {Unit=>doc.copy}
-    
-    def allLayers(lay: Layer, depth: Int): Future[Unit] = Future {
-      if(!lay.checkbox && lay.changed){
-        val f = createLayer(lay, depth, empty)
-        val fs = for(child <- lay) yield allLayers(child, depth+1)
-        waitFor(f)
-        fs foreach waitFor
-      }
-    }
-    
-    val fs = for(lay <- RootLayer)
-      yield allLayers(lay, 1)
-    
-    fs foreach waitFor
-  }
   
 }

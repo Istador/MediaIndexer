@@ -1,12 +1,3 @@
-AuthName "Authenticate"
-AuthType Basic
-AuthUserFile /internet/lampp/htdocs/https/indexer/output/.htusers
-require user student
-
-<Files ".htusers">
-Deny from all
-</Files>
-
 <IfModule mime_module>
 #may need additional rights, alternatively use httpd.conf or mime.types
 AddType application/rss+xml .rss

@@ -1,6 +1,6 @@
 package de.blackpinguin.util
 
-import java.io.{File, FileInputStream}
+import java.io.{File, FileInputStream, InputStreamReader}
 import java.util.{Properties => Ps}
 
 object Properties {
@@ -9,7 +9,7 @@ object Properties {
   val user: Ps = new Ps(default)
   
   def load(f: File) = 
-    user.load(new FileInputStream(f))
+    user.load(new InputStreamReader(new FileInputStream(f), "UTF-8"))
   
   def addDefault(key: String, value: String): Unit = 
     default.setProperty(key, value)
