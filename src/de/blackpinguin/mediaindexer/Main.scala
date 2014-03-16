@@ -38,6 +38,7 @@ object Main {
         case "-small" => small
         case "-smart" => smart
         case "-full" => full
+        case "-reset" => reset
         case "-xslt" => xsltAlone
 
         case _ => printUsage
