@@ -61,9 +61,9 @@ object Main {
     println("MediaIndexer -reset\t\tdelete videos.xml and search from last to first page.")
     println("MediaIndexer -xslt\t\tonly transforms videos.xml using the XSLT files")
     println("MediaIndexer -update URL\tupdate a single video")
-    println("MediaIndexer -update ID\tupdate a single video")
+    println("MediaIndexer -update ID\t\tupdate a single video")
     println("MediaIndexer -remove URL\tremove a single video")
-    println("MediaIndexer -remove ID\tremove a single video")
+    println("MediaIndexer -remove ID\t\tremove a single video")
   }
 
   def loadIndex {
@@ -154,6 +154,8 @@ object Main {
    * dauer mitzubekommen.
    */
   def update(str: String) {
+    loadIndex
+    
     Aktion("Aktuallisiere ein einzelnes Video") :=
       intOrString(str)(Mediathek.update)(Mediathek.update)
     
@@ -164,8 +166,13 @@ object Main {
    * entfernt ein einzelnes video komplett aus der xml-datei
    */
   def remove(str: String) {
-    Aktion("Entferne ein einzelnes Video") :=
+    loadIndex
+    
+    Aktion("Entferne ein einzelnes Video") := {
       intOrString(str)(XML.remove)(XML.remove)
+      XML.save
+      RootLayer.needChange //alles neu aktualisieren
+    }
     
     xslt
   }

@@ -7,7 +7,7 @@ import javax.xml.transform.dom.{DOMSource, DOMResult}
 import javax.xml.transform.stream.StreamResult
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants.NODESET
-
+import javax.xml.xpath.XPathFactory
 
 object DOM {
 
@@ -22,21 +22,36 @@ object DOM {
     builder.parse(is)
   }
   
-  def save(file: File)(implicit doc:Document):Unit = 
-    save(new FileOutputStream(file))
+  def save(out: File)(implicit doc:Document):Unit = {
+    //temporäre Datei erstellen
+    val tmp = new File(out.getParentFile, out.getName + ".tmp")
+    if(tmp.exists) tmp.delete
+    tmp.createNewFile
+    
+    //speichern
+    val fos = new FileOutputStream(tmp) 
+    save(fos)
+    fos.close
+    
+    if(out.exists) out.delete //output datei löschen
+    tmp.renameTo(out) //umbenennen
+  }
   
-  def save(os:OutputStream)(implicit doc: Document):Unit = {
-    val transformer = TransformerFactory.newInstance().newTransformer();
-	val source = new DOMSource(doc);
-	val result = new StreamResult(os);
-	transformer.transform(source, result);
+  private[this] def save(os:OutputStream)(implicit doc: Document):Unit = {
+    val transformer = TransformerFactory.newInstance.newTransformer
+	val source = new DOMSource(doc)
+	val result = new StreamResult(os)
+	transformer.transform(source, result)
   }
   
   
+  lazy val xpfactory = ThreadSafe{this.synchronized{XPathFactory.newInstance}}
   
   def xpath(str: String)(implicit doc: Document):NL = {
-    val xp = javax.xml.xpath.XPathFactory.newInstance().newXPath()
-    xp.evaluate(str, doc, NODESET).asInstanceOf[NodeList]
+    val xp = xpfactory.get.newXPath
+    doc.synchronized{
+      xp.evaluate(str, doc, NODESET).asInstanceOf[NodeList]
+    }
     //val expr = xp.compile(str)
     //expr.evaluate(doc, NODESET).asInstanceOf[NodeList]
   }
@@ -44,8 +59,10 @@ object DOM {
   
   
   private[DOM] def xpath(str: String, n:Node)(implicit doc: Document):NL = {
-    val xp = javax.xml.xpath.XPathFactory.newInstance().newXPath()
-    xp.evaluate(str, n, NODESET).asInstanceOf[NodeList]
+    val xp = xpfactory.get.newXPath
+    n.synchronized {
+      xp.evaluate(str, n, NODESET).asInstanceOf[NodeList]
+    }
   }
   
   

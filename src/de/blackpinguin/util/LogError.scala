@@ -23,22 +23,32 @@ object LogError {
     new FileOutputStream(f, true) //appending to file
   }
   
-  private[LogError] lazy val outWriter = new PrintWriter(openCreate(file))
+  private[this] var _outWriter: PrintWriter = null
+  
+  private[LogError] def outWriter: PrintWriter = {
+    this.synchronized {
+      if(_outWriter == null)
+        _outWriter = new PrintWriter(openCreate(file))
+    }
+    _outWriter
+  }
   
   private[LogError] var errorCount = 0
   
   def errors = errorCount
   
-  def close = outWriter.close
+  def close = if(_outWriter != null) _outWriter.close
   
 }
 
 case class LogError(e: Throwable){
+  import LogError._
+  
   def :=(msg: String) = LogError.outWriter.synchronized {
-    LogError.errorCount += 1
-    LogError.outWriter.println("<error time='"+DateTime()+"' msg='"+msg+"'>")
-    e.printStackTrace(LogError.outWriter)
-    LogError.outWriter.println("</error>")
-    LogError.outWriter.flush
+    errorCount += 1
+    outWriter.println("<error time='"+DateTime()+"' msg='"+msg+"'>")
+    e.printStackTrace(outWriter)
+    outWriter.println("</error>")
+    outWriter.flush
   }
 }
