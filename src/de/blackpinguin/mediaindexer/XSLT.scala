@@ -93,12 +93,18 @@ object XSLT {
 
   def apply(xml: StreamSource, xslt: File, out: File): Unit = {
     try {
-      out.delete
+      //temporäre Datei erstellen
+      val tmp = File.createTempFile(out.getName, ".tmp", out.getParentFile)
+      tmp.deleteOnExit
       val tFactory = TransformerFactory.newInstance
       val transformer = tFactory.newTransformer(new StreamSource(xslt))
       transformer.transform(xml, new StreamResult(new FileOutputStream(out)))
+      //alte Datei löschen falls vorhanden
+      if(out.exists) out.delete
+      //tmeporäre Datei umbenennen
+      tmp.renameTo(out)
       println(out.getPath + " generated.")
-    } catch{
+    } catch {
       case _:Throwable => throw new RuntimeException("Error: generating '"+out.getPath+"' using '"+xslt.getPath+"'.")
     }
   }

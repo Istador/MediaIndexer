@@ -111,7 +111,7 @@
 			<xsl:with-param name="string" select="/indexer[1]/@gendate" />
 			<xsl:with-param name="search" select="' '" />
 			<xsl:with-param name="replace" select="' um '" />
-		</xsl:call-template> Uhr, mit einem Program von <a href="https://blackpinguin.de/" target="_blank">Robin C. Ladiges</a>.</p>
+		</xsl:call-template> Uhr, mit einem Programm von <a href="https://blackpinguin.de/" target="_blank">Robin C. Ladiges</a>.</p>
 	</footer>
 </body>
 </html>
