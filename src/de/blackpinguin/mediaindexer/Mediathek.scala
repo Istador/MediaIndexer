@@ -71,14 +71,6 @@ object Mediathek {
   
   val client = AsyncHTTP
   
-  client.recover = {
-      case HTTP.StatusException(url, status) =>
-        println("Fehler beim Laden von '"+url+"'. HTTP Status Code: "+status)
-      case e: java.net.ConnectException =>
-        println("Fehler beim Verbindungsaufbau: ")
-        e.printStackTrace
-  }
-  
   val latestVideo = Video.latest
 
   type Cond = Video => Boolean

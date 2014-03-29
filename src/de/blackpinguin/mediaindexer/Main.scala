@@ -10,7 +10,10 @@ object Main {
       val (_, time) = Time.measure{ submain(args) }
       println("Gesamtdauer: "+Time.toStr(time))
     } catch {
-      case t:Throwable => LogError(t) := "Unbehandelte Exception"
+      case t: BehandelteException => 
+        
+      case t:Throwable =>
+        LogError(t) := "Unbehandelte Exception"
     }
     //Fehlermeldung ausgeben
     if(LogError.errors == 1)

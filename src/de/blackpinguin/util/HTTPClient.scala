@@ -73,13 +73,16 @@ object AsyncHTTP extends HTTP {
   private[this] val builder = ThreadSafe{
     val tmp = new AsyncHttpClientConfig.Builder()
     tmp.setFollowRedirects(true)
+    tmp.setMaxRequestRetry(20) // default: 5
+    tmp.setRequestTimeoutInMs(120000)
+    tmp.setConnectionTimeoutInMs(120000)
+    tmp.setIdleConnectionTimeoutInMs(120000) //120s, default: 60s
+    tmp.setIdleConnectionInPoolTimeoutInMs(120000)
     tmp
   }
   
   private[this] val client = ThreadSafe(new AsyncHttpClient(builder.get.build))
   
-  var recover: PartialFunction[Throwable, Unit] = null
-
   protected def get(url: String)(implicit exec: Executor): Future[Response] = {
     val f = client.get.prepareGet(url).setHeader("Accept-Charset", "utf-8").execute()
     val p = Promise[Response]()
@@ -95,10 +98,7 @@ object AsyncHTTP extends HTTP {
       }
     }, exec)
     
-    val fu = p.future
-    if(recover != null)
-      fu.onFailure(recover)
-    fu  
+    p.future
   }
 
 }

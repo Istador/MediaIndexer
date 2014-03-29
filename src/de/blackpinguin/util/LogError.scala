@@ -46,6 +46,7 @@ case class LogError(e: Throwable){
   
   def :=(msg: String) = LogError.outWriter.synchronized {
     errorCount += 1
+    println("Error: "+msg)
     outWriter.println("<error time='"+DateTime()+"' msg='"+msg+"'>")
     e.printStackTrace(outWriter)
     outWriter.println("</error>")
