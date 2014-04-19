@@ -92,7 +92,7 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
       lay.needChange
   }
   
-  def hasChanged: Unit = {
+  def hasChanged: Unit = if(!changed) {
     changed = true
     parent match {
       case Some(p) => p.hasChanged
