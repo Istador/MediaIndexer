@@ -113,7 +113,7 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   protected[Layer] def add(lay: Layer) = {
     this.synchronized {
       layers :+= lay
-      layers = layers.sorted
+      layers = layers.sorted //TODO: use customized insertion sort instead of quicksort
       layernames += lay.name -> lay
     }
   }
@@ -146,7 +146,7 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   protected[Layer] def add(vref: VRef): Unit = this.synchronized {
     if(!titles.contains(vref.id)){
       videos :+= vref
-      videos = videos.sorted(vOrder)
+      videos = videos.sorted(vOrder) //TODO: use customized insertion sort instead of quicksort
       titles += vref.id -> vref
       //println(name+": "+videos.map(_.title).mkString(", "))
     }
