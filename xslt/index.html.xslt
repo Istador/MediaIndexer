@@ -68,8 +68,9 @@
 		</span>
 		<a class="rss" href="feed.rss">
 			<xsl:attribute name="title"><xsl:value-of select="$docTitle"/> als Feed abonnieren (RSS)</xsl:attribute>
-			<!-- <img class="rss" src="rss.png" alt="RSS Icon"/> -->
 		</a>
+		<a class="json" href="data.json" title="JSON-Daten"></a>
+		<a class="xml" href="data.xml" title="XML-Daten"></a>
 	</header>
 	
 	<div id="background">
@@ -84,14 +85,6 @@
 	
 	<xsl:if test="$relPath">
 		<xsl:for-each select="/indexer[1]/index[1]/layer">
-			<xsl:variable name="temp">
-				<xsl:call-template name="str:replace">
-					<xsl:with-param name="string" select="@name" />
-					<xsl:with-param name="search" select="' '" />
-					<xsl:with-param name="replace" select="'_'" />
-				</xsl:call-template>
-			</xsl:variable>
-		
 			<xsl:call-template name="layerDiv">
 				<xsl:with-param name="path">
 					<xsl:value-of select="/indexer[1]/index[1]/layer[1]/@absPath"/>
@@ -122,15 +115,7 @@
 <!-- Rekursive Funktion: Ausgabe einer Ebene -->
 <xsl:template name="layer">
 	<!-- Funktionsparameter mit Default-Wert -->
-	<xsl:param name="pathparam" select="@name" />
-
-	<xsl:variable name="accuPath">
-		<xsl:call-template name="str:replace">
-			<xsl:with-param name="string" select="$pathparam" />
-			<xsl:with-param name="search" select="' '" />
-			<xsl:with-param name="replace" select="'_'" />
-		</xsl:call-template>
-	</xsl:variable>
+	<xsl:param name="accuPath" select="@url" />
 	
 	<xsl:variable name="path">
 		<xsl:if test="$relPath">
@@ -152,16 +137,21 @@
 			
 			<span><xsl:value-of select="@name"/></span>
 			
+			<!-- Wenn es ein Layer mit eigenen Unterseiten ist -->
 			<xsl:if test="not(@checkbox and @checkbox = 'true')">
 				<a class="extern">
 					<xsl:attribute name="title"><xsl:value-of select="@name"/></xsl:attribute>
 					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/</xsl:attribute>
-					<!-- <img class="extern" src="extern.png" alt="Extern Icon"/> -->
 				</a>
 				<a class="rss">
 					<xsl:attribute name="title"><xsl:value-of select="@name"/> als Feed abonnieren (RSS)</xsl:attribute>
 					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/feed.rss</xsl:attribute>
-					<!-- <img class="rss" src="rss.png" alt="RSS Icon"/> --> 
+				</a>
+				<a class="json" title="JSON-Daten">
+					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/data.json</xsl:attribute>
+				</a>
+				<a class="xml" title="XML-Daten">
+					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/data.xml</xsl:attribute>
 				</a>
 			</xsl:if>
 			
@@ -196,11 +186,11 @@
 		<xsl:for-each select="layer">
 			<!-- Rekursionsaufruf mit Parameter -->
 			<xsl:call-template name="layer">
-				<xsl:with-param name="pathparam">
+				<xsl:with-param name="accuPath">
 					<xsl:if test="$accuPath">
 						<xsl:value-of select="concat($accuPath, '/')"/>
 					</xsl:if>
-					<xsl:value-of select="@name"/>
+					<xsl:value-of select="@url"/>
 				</xsl:with-param>
 			</xsl:call-template>
 		</xsl:for-each>

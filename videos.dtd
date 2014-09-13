@@ -21,6 +21,7 @@
 <!ELEMENT layer (layer* | vref*)>
 <!ATTLIST layer
 	name		CDATA #REQUIRED
+	url			CDATA #REQUIRED
 	checkbox	CDATA #IMPLIED
 	videos		CDATA #IMPLIED
 	duration	CDATA #IMPLIED

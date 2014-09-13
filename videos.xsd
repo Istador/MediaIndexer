@@ -52,6 +52,7 @@
 			</xsd:choice>
 		</xsd:sequence>
 		<xsd:attribute name="name" type="xsd:string" use="required" />
+		<xsd:attribute name="url" type="xsd:string" use="required" />
 		<xsd:attribute name="checkbox" type="bool" use="optional" />
 		<xsd:attribute name="videos" type="count" use="optional" />
 		<xsd:attribute name="duration" type="duration" use="optional" />

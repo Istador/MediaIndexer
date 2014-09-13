@@ -4,8 +4,10 @@ import java.io.File
 import de.blackpinguin.util._
 
 object Main {
-
+ 
+  
   def main(args: Array[String]): Unit = {
+    
     try{
       val (_, time) = Time.measure{ submain(args) }
       println("Gesamtdauer: "+Time.toStr(time))

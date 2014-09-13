@@ -3,6 +3,9 @@ package de.blackpinguin.mediaindexer
 import scala.concurrent.duration.Duration
 import org.w3c.dom.Document
 import de.blackpinguin.util.DOM._
+import java.net.URLEncoder
+import scala.collection.mutable.ArrayBuffer
+import de.blackpinguin.util.ArrayInsertSort
 
 case class VRef(id:Int, title:String){
   def toXML(implicit doc: Document): N = {
@@ -69,8 +72,9 @@ object Layer {
       loadNode(child, Some(lay))
   }
   
-  //alle direkten <layer> Kinder in <index>
+  //lade den vorhandenen index ein 
   def init = 
+    //alle direkten <layer> Kinder in <index>
     for(node <- XML.indexNode.xpath("./layer")){
       loadNode(node)
     }
@@ -84,6 +88,9 @@ object RootLayer extends Layer(None, "", false) {
 
 class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Boolean = false) extends Iterable[Layer] {
 
+  //Name that can be used in a url or filename. can't contain %, because this would be interpreted by the browser
+  lazy val url = URLEncoder.encode(name.replace(" ", "_"), "UTF-8").replace("%","+")
+  
   var changed: Boolean = false
   
   def needChange: Unit = {
@@ -104,7 +111,7 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   var duration: Duration = null
   
   //child Layers
-  var layers = Array[Layer]()
+  val layers = ArrayBuffer[Layer]()
   var layernames = Map[String, Layer]()
   
   def iterator = layers.iterator
@@ -112,8 +119,7 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   //child Layers hinzufügen
   protected[Layer] def add(lay: Layer) = {
     this.synchronized {
-      layers :+= lay
-      layers = layers.sorted //TODO: use customized insertion sort instead of quicksort
+      layers.insertSorted(lay)
       layernames += lay.name -> lay
     }
   }
@@ -139,14 +145,13 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   lazy val vOrder = Layer.vOrder(this)
 
   //child Videos
-  var videos = Array[VRef]()
+  val videos = ArrayBuffer[VRef]()
   var titles = Map[Int, VRef]()
   def title(v: Video): Option[String] = titles.get(v.id).map{_.title}
 
   protected[Layer] def add(vref: VRef): Unit = this.synchronized {
     if(!titles.contains(vref.id)){
-      videos :+= vref
-      videos = videos.sorted(vOrder) //TODO: use customized insertion sort instead of quicksort
+      videos.insertSorted(vref)(vOrder)
       titles += vref.id -> vref
       //println(name+": "+videos.map(_.title).mkString(", "))
     }
@@ -173,14 +178,22 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
     case Some(p) => p.path :+ name
     case None => Array(name)
   }
+  
+  //vollständiger URL-Pfad dieses Layers
+  lazy val urlpath: Array[String] = parent match {
+    case Some(p) => p.urlpath :+ url
+    case None => Array(url)
+  }
 
-  lazy val xpath: String =
-    "/indexer[1]/index[1]/layer[@name='" + path.mkString("']/layer[@name='") + "']"
-
+  
+  lazy val xpath: String = "/indexer[1]/index[1]/layer[@name='" + path.mkString("']/layer[@name='") + "']"
+  
+  
   def toXML(implicit doc: Document): N = {
     val node: N = doc.createElement("layer")
     
     node.attr("name", name)
+    node.attr("url", url)
     if (checkbox)
       node.attr("checkbox", "true")
     if (duration != null)

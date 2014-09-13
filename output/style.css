@@ -27,7 +27,7 @@ details div div a, details div div span {
 	margin-left: 3px;
 }
 
-.rss, .extern, .videobtn {
+.rss, .xml, .json, .extern, .videobtn {
 	display: inline-block;
 	vertical-align: middle;
 	
@@ -46,8 +46,14 @@ details div div a, details div div span {
 	-ms-user-select: none;
 	user-select: none;
 }
+.xml {
+	width: 1.75em;
+	height: 0.75em;
+}
 
 .rss { background-image: url(rss.png); }
+.xml { background-image: url(xml.png); }
+.json { background-image: url(json.png); }
 .extern { background-image: url(extern.png); }
 .videobtn { background-image: url(play.png); }
 
@@ -56,11 +62,15 @@ header {
 	line-height: 1.25em;
 }
 
-header a.rss {
+header a.rss, header a.json {
 	height: 1.25em;
 	width: 1.25em;
 }
 
+header a.xml {
+	width: 2.1875em;
+	height: 0.9375em;
+}
 
 
 /* Videotitel beim eingebetteten ansehen. */

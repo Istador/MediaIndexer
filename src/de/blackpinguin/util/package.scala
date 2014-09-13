@@ -5,6 +5,7 @@ import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Failure}
+import scala.collection.mutable.ArrayBuffer
 
 package object util {
   
@@ -54,5 +55,22 @@ package object util {
     else r
   }
   
+  implicit class ArrayInsertSort[T](arr: ArrayBuffer[T]) {
+	  def insertSorted(elem: T)(implicit o: Ordering[T]): Unit = {
+	    arr.append(elem)
+	    
+	    def swap(i: Int, j: Int) = {
+	      val tmp = arr(i)
+	      arr.update(i, arr(j))
+	      arr.update(j, tmp)
+	    }
+	    
+	    var i = arr.length - 1
+	    while(i > 0 && o.lt(arr(i), arr(i-1)) ){
+	      swap(i, i-1)
+	      i = i-1
+	    }
+	  }
+  }
   
 }
