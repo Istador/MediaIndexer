@@ -44,7 +44,7 @@
 		<xsl:text>"name":"</xsl:text><xsl:value-of select="@name"/><xsl:text>",</xsl:text>
 		<xsl:text>"dirName":"</xsl:text><xsl:value-of select="@url"/><xsl:text>",</xsl:text>
 		<xsl:if test="@duration"><xsl:text>"duration":"</xsl:text><xsl:value-of select="@duration"/><xsl:text>",</xsl:text></xsl:if>
-		<xsl:if test="@videos"><xsl:text>"videoCount":"</xsl:text><xsl:value-of select="@videos"/><xsl:text>",</xsl:text></xsl:if>
+		<xsl:if test="@videos"><xsl:text>"videoCount":</xsl:text><xsl:value-of select="@videos"/><xsl:text>,</xsl:text></xsl:if>
 		
 		<!-- für alle Sublayer -->
 		<xsl:text>"layers":[</xsl:text>
@@ -75,7 +75,7 @@
 
 <xsl:template name="video">
 	<xsl:text>{</xsl:text>
-		<xsl:text>"id":"</xsl:text><xsl:value-of select="@id"/><xsl:text>",</xsl:text>
+		<xsl:text>"id":</xsl:text><xsl:value-of select="@id"/><xsl:text>,</xsl:text>
 		<xsl:text>"date":"</xsl:text><xsl:value-of select="@date"/><xsl:text>",</xsl:text>
 		<xsl:text>"pubdate":"</xsl:text><xsl:value-of select="@pubdate"/><xsl:text>",</xsl:text>
 		<xsl:text>"duration":"</xsl:text><xsl:value-of select="@duration"/><xsl:text>",</xsl:text>
