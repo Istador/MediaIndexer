@@ -6,7 +6,7 @@ object Test extends App {
   val rnd = new java.security.SecureRandom()
   var a = A[Int]()
   val b = A[Int]()
-  val n = 1000
+  val n = 20000
   
   
   println("1:")
