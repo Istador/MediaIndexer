@@ -26,10 +26,15 @@ object Video {
   def fromXML(node: N):Video = {
     val v = Video( node.attr("url").attr )
 
+    
+    
     v.title = node.attr("title").attr
     v.author = node.attr("author").attr
     v.duration = node.attr("duration").attr
     v.pubDate = node.attr("pubdate").attr
+    
+    val tmp = node.attr("comments").attr
+    v.comments = if(tmp != null) tmp.toInt else 0
     
     for(file <- node.getChildNodes:NL){
       val url = file.attr("url").attr
@@ -83,6 +88,9 @@ case class Video(val url: String) extends Iterable[VFile] {
   //Dauer
   var duration: Duration = null
   
+  //Anzahl Kommentare
+  var comments: Int = 0
+  
   //Veroeffentlichungsdatum
   var pubDate: Date = null
   
@@ -118,6 +126,11 @@ case class Video(val url: String) extends Iterable[VFile] {
     node.attr("pubdate", pubDate)
     node.attr("author", author)
     
+    //Kommentaranzahl, wenn nicht 0
+    if(comments != 0)
+      node.attr("comments", comments)
+    
+    //Dauer falls bekannt
     if (duration != null)
       node.attr("duration", duration)
     

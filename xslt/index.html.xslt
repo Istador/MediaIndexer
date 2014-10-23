@@ -104,7 +104,7 @@
 			<xsl:with-param name="string" select="/indexer[1]/@gendate" />
 			<xsl:with-param name="search" select="' '" />
 			<xsl:with-param name="replace" select="' um '" />
-		</xsl:call-template> Uhr, mit einem Programm von <a href="https://blackpinguin.de/" target="_blank">Robin C. Ladiges</a>.</p>
+		</xsl:call-template> Uhr, mit einem Programm von <a href="https://rcl.blackpinguin.de/" target="_blank">Robin C. Ladiges</a>.</p>
 	</footer>
 </body>
 </html>
@@ -137,23 +137,32 @@
 			
 			<span><xsl:value-of select="@name"/></span>
 			
-			<!-- Wenn es ein Layer mit eigenen Unterseiten ist -->
-			<xsl:if test="not(@checkbox and @checkbox = 'true')">
-				<a class="extern">
-					<xsl:attribute name="title"><xsl:value-of select="@name"/></xsl:attribute>
-					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/</xsl:attribute>
-				</a>
-				<a class="rss">
-					<xsl:attribute name="title"><xsl:value-of select="@name"/> als Feed abonnieren (RSS)</xsl:attribute>
-					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/feed.rss</xsl:attribute>
-				</a>
-				<a class="json" title="JSON-Daten">
-					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/data.json</xsl:attribute>
-				</a>
-				<a class="xml" title="XML-Daten">
-					<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/data.xml</xsl:attribute>
-				</a>
-			</xsl:if>
+			<xsl:choose>
+				<!-- Wenn es ein Layer mit eigenen Unterseiten ist -->
+				<xsl:when test="not(@checkbox and @checkbox = 'true')">
+					<a class="extern">
+						<xsl:attribute name="title"><xsl:value-of select="@name"/></xsl:attribute>
+						<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/</xsl:attribute>
+					</a>
+					<a class="rss">
+						<xsl:attribute name="title"><xsl:value-of select="@name"/> als Feed abonnieren (RSS)</xsl:attribute>
+						<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/feed.rss</xsl:attribute>
+					</a>
+					<a class="json" title="JSON-Daten">
+						<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/data.json</xsl:attribute>
+					</a>
+					<a class="xml" title="XML-Daten">
+						<xsl:attribute name="href"><xsl:value-of select="$accuPath"/>/data.xml</xsl:attribute>
+					</a>
+				</xsl:when>
+				<!-- sonst -->
+				<xsl:otherwise>
+					<!-- Kommentaranzahl -->
+					<xsl:if test="@comments and number(@comments) > 0">
+						<span>(<xsl:value-of select="@comments"/>)</span>
+					</xsl:if>
+				</xsl:otherwise>
+			</xsl:choose>
 			
 		</summary>
 		
@@ -255,6 +264,11 @@
 		<!-- Videodauer, falls vorhanden -->
 		<xsl:if test="@duration">
 			<span>(<xsl:value-of select="@duration"/>)</span>
+		</xsl:if>
+		
+		<!-- Kommentaranzahl, falls vorhanden -->
+		<xsl:if test="@comments">
+			<span>(<xsl:value-of select="@comments"/> Kommentar<xsl:if test="number(@comments) != 1">e</xsl:if>)</span>
 		</xsl:if>
 		
 		<!-- Videodateien -->

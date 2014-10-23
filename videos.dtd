@@ -25,6 +25,7 @@
 	checkbox	CDATA #IMPLIED
 	videos		CDATA #IMPLIED
 	duration	CDATA #IMPLIED
+	comments	CDATA #IMPLIED
 	relPath		CDATA #IMPLIED
 	absPath		CDATA #IMPLIED
 >
@@ -53,6 +54,7 @@
 	date		CDATA #REQUIRED
 	pubdate		CDATA #REQUIRED
 	duration	CDATA #IMPLIED
+	comments	CDATA #IMPLIED
 	author		CDATA #REQUIRED
 >
 

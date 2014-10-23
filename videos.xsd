@@ -56,6 +56,7 @@
 		<xsd:attribute name="checkbox" type="bool" use="optional" />
 		<xsd:attribute name="videos" type="count" use="optional" />
 		<xsd:attribute name="duration" type="duration" use="optional" />
+		<xsd:attribute name="comments" type="count" use="optional" />
 		<xsd:attribute name="relPath" type="xsd:string" use="optional" />
 		<xsd:attribute name="absPath" type="xsd:string" use="optional" />
 	</xsd:complexType>
@@ -97,6 +98,7 @@
 		<xsd:attribute name="date" type="date" use="required" />
 		<xsd:attribute name="pubdate" type="date" use="required" />
 		<xsd:attribute name="duration" type="duration" use="optional" />
+		<xsd:attribute name="comments" type="count" use="optional" />
 		<xsd:attribute name="author" type="xsd:string" use="required" />
 	</xsd:complexType>
 </xsd:element>

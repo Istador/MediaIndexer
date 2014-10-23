@@ -103,6 +103,9 @@
 				<title><xsl:value-of select="$title"/></title>
 				<link><xsl:value-of select="$url"/></link>
 				<dc:creator><xsl:value-of select="@author"/></dc:creator>
+				<xsl:if test="@comments">
+				<comments><xsl:value-of select="$url"/>#media_comments_list</comments>
+				</xsl:if>
 				<description>
 					<xsl:text disable-output-escaping="yes">&lt;![CDATA[</xsl:text>
 					

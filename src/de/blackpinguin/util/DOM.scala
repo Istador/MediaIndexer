@@ -84,17 +84,24 @@ object DOM {
     def attr = if(n != null) n.getNodeValue() else null
     def attr_=(str: String) = n.setNodeValue(str)
     
-    def attr(key: String):N = n.getAttributes().getNamedItem(key)
+    def attr(key: String):N = {
+      val atts = n.getAttributes()
+      if(atts == null) return N(null)
+      val item = atts.getNamedItem(key)
+      if(item == null) return N(null)
+      item
+    }
+    
     def apply(key: String):String = attr(key).attr
     
     
     def attr(key: String, value: String):Unit = {
       val ref = attr(key)
       
-      if(ref == null){
+      if(ref == null || ref.n == null){
     	  val a = doc.createAttribute(key)
     	  a.setValue(value)
-    	  n.getAttributes().setNamedItem(a)
+    	  n.getAttributes.setNamedItem(a)
       } else {
         ref.attr = value
       }

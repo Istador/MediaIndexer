@@ -52,6 +52,7 @@ object Main {
       args(0) match {
         case "-update" => update(args(1))
         case "-remove" => remove(args(1))
+        case "-full" => full(args(1))
         case _ => printUsage
       }
     } else
@@ -92,16 +93,15 @@ object Main {
   
   //verwende index und video aus xml datei, suche nach neuen videos, breche ab bei bekannten videos
   def small {
-    
     loadIndex
     
     Aktion("Suche neue Videos", "solange bis ein altes gefunden wird") := 
       Mediathek.small
+      
     xslt
   }
 
   def smart {
-    
     genIndex
     
     Aktion("Suche neue Videos", "solange bis ein altes gefunden wird") :=
@@ -111,11 +111,23 @@ object Main {
   }
 
   //verwende video id's aus xml datei, update alle videos, generiere index neu.
-  def full {
+  def full: Unit = {
     Aktion("Aktuallisiere alle Videos", "behält die IDs") :=
       Mediathek.full
     
     xslt
+  }
+  
+  def full(str: String): Unit = {
+    intOrString(str){ n =>
+      loadIndex
+      Aktion("Aktualisiere alle Videos bis zur Seite "+n) := Mediathek.full(n)
+      xslt
+    }{ _ =>
+     LogError(CheckedException) := "Parameterfehler (kein Integer): -full "+str 
+     printUsage
+    }
+    
   }
 
   //lösche xml datei und erstelle alles neu. traversiere die seiten von der letzten zur ersten.

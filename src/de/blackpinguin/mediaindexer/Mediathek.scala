@@ -27,6 +27,8 @@ object Mediathek {
       , ("video.files.xpath", "//video[@id='index_video']//source")
       , ("video.file.url.xpath", "./@src")
       , ("video.file.type.xpath", "./@type")
+      , ("video.comments.xpath", "//div[@id='media_comments_list']/div[1]/div[1]/h2[1]")
+      , ("video.comments.regex", "(\\d+) Kommentare")
   ))
   
   
@@ -39,7 +41,9 @@ object Mediathek {
   def getText(property: String, node:N = null)(implicit doc: Document): String = {
     //String mittels XPath aus Document holen
     val prop = Prop(property+".xpath")
-    val str = (if(node == null) xpath(prop) else node.xpath(prop)).getTextContent
+    val nl = if(node == null) xpath(prop) else node.xpath(prop)
+    if(nl == null) return ""
+    val str = nl.getTextContent
     
     //schaue ob eine optionale regex Property exisitert
     Prop.get(property+".regex") match {
@@ -74,15 +78,20 @@ object Mediathek {
   val latestVideo = Video.latest
 
   type Cond = Video => Boolean
+  lazy val aTrue: Any => Boolean = _ => true //immer wahr
+  lazy val aFalse: Any => Boolean = _ => false //immer falsch
   
   //von vorne, alle videos überprüfen ID's behalten
-  def full = viewPages (_ => true) (_ => false) (1) (_+1)
+  def full = viewPages (aTrue) (aFalse) (1) (_+1) (aFalse)
+  
+  //von vorne, alle videos überprüfen ID's behalten, bis zur Seite n
+  def full(n: Int) = viewPages (aTrue) (aFalse) (1) (_+1) (_ >= n)
   
   //von vorne, abbruch wenn bereits bekannt
-  def small = viewPages (_.id > latestVideo) (_.id <= latestVideo) (1) (_+1)
+  def small = viewPages (_.id > latestVideo) (_.id <= latestVideo) (1) (_+1) (aFalse)
   
   //von hinten, alle videos überprüfen ID's behalten
-  def backwards = viewPages (_ => true) (_ => false) (lastPageNumber) (_-1)
+  def backwards = viewPages (aTrue) (aFalse) (lastPageNumber) (_-1) (_ <= 0)
   
   //lade die letzte Seite, und ermittel die Seitenzahl der Seite.
   def lastPageNumber: Long = {
@@ -101,7 +110,7 @@ object Mediathek {
   //von vorne, solange bis eine bestimmtes Video gefunden wird, nur dieses prüfen
   def update(url: String): Unit = {
       val cond:Cond = {v => url.equalsIgnoreCase(v.url)}
-      viewPages (cond) (cond) (1) (_+1)
+      viewPages (cond) (cond) (1) (_+1) (aFalse)
   }
   
   //updaten anhand der ID
@@ -117,16 +126,16 @@ object Mediathek {
     getNodes("pages").exists(_.attr.equals(Prop("pages.url")+n))
   
   
-  def viewPages(examine: Cond)(abort: Cond)(firstPage: =>Long)(nextPage: Long=>Long): Unit = {
+  def viewPages(examine: Cond)(abort: Cond)(firstPage: =>Long)(nextPage: Long=>Long)(lastPage: Long=>Boolean): Unit = {
       val videos = Coll[Future[Video]]()
-      val future = examinePage(firstPage, videos)(examine)(abort)(nextPage)
+      val future = examinePage(firstPage, videos)(examine)(abort)(nextPage)(lastPage)
       waitFor(future)
       println(videos.size + " Videos aktualisiert.")
       videos.foreach(waitFor)
       XML.save
     }
 
-  def examinePage(n: Long, videos: Coll[Future[Video]])(examine: Cond)(abort: Cond)(nextPage: Long=>Long): Future[Unit] = {
+  def examinePage(n: Long, videos: Coll[Future[Video]])(examine: Cond)(abort: Cond)(nextPage: Long=>Long)(lastPage: Long=>Boolean): Future[Unit] = {
     for (doc <- client.getDOM(Prop("domain") + Prop("pages.url") + n)) yield {
       implicit val d = doc
       println("Seite " + n + " geladen.")
@@ -144,14 +153,14 @@ object Mediathek {
           //betrachte es genauer
           videos.add(examineVideo(v))
         //bei alten Videos nicht zur nächsten Seite
-        if(abort(v))
+        if(!ende && abort(v))
           ende = true
       }
           
       //existiert überhaupt eine weitere Seite?
-      if(!ende && hasPage(nextPage(n)))
+      if(!ende && !lastPage(n) && hasPage(nextPage(n)))
         //nächste Seite laden
-        waitFor(examinePage(nextPage(n), videos)(examine)(abort)(nextPage))
+        waitFor(examinePage(nextPage(n), videos)(examine)(abort)(nextPage)(lastPage))
     }
   }
   
@@ -188,6 +197,8 @@ object Mediathek {
       
       //Hochladedatum
       video.pubDate = getText("video.pubDate")
+      video.comments = getText("video.comments").toInt
+      //println(getText("video.comments"))
 
       //für alle Videodateien
       getNodes("video.files").foreach { source =>

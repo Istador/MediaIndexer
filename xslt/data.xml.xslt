@@ -40,6 +40,7 @@
 		<xsl:attribute name="name"><xsl:value-of select="@name"/></xsl:attribute>
 		<xsl:attribute name="dirName"><xsl:value-of select="@url"/></xsl:attribute>
 		<xsl:if test="@duration"><xsl:attribute name="duration"><xsl:value-of select="@duration"/></xsl:attribute></xsl:if>
+		<xsl:if test="@comments"><xsl:attribute name="comments"><xsl:value-of select="@comments"/></xsl:attribute></xsl:if>
 		<xsl:if test="@videos"><xsl:attribute name="videoCount"><xsl:value-of select="@videos"/></xsl:attribute></xsl:if>
 		
 		<!-- Rekursiver Aufruf für Sublayer -->

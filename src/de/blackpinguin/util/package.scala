@@ -9,8 +9,8 @@ import scala.collection.mutable.ArrayBuffer
 
 package object util {
   
-  lazy val CheckedException = BehandelteException()
-  case class BehandelteException() extends RuntimeException
+  object CheckedException extends BehandelteException
+  abstract class BehandelteException extends RuntimeException
     
   private[this] def analyseException[A](f: Future[A], e: Throwable): Unit = {
     e match {

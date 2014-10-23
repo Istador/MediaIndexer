@@ -41,6 +41,7 @@ object Layer {
   import XML.doc
   import de.blackpinguin.util.DOM._
   
+  //aka. fromXML
   private[this] def loadNode(node: N, parent: Option[Layer] = None): Unit = {
     val name = node.attr("name").attr
     val checkbox = { 
@@ -53,6 +54,9 @@ object Layer {
     
     val duration = node.attr("duration")
     if(duration != null) lay.duration = duration.attr
+    
+    val comments = node.attr("comments")
+    if(comments != null) lay.comments = comments.attr.toInt
     
     parent match {
       case Some(p) => p.add(lay)
@@ -109,6 +113,7 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   
   
   var duration: Duration = null
+  var comments: Int = 0
   
   //child Layers
   val layers = ArrayBuffer[Layer]()
@@ -161,10 +166,13 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
   def add(v: Video, title: String): Unit = {
     hasChanged
     val vref = VRef(v.id, title)
-    //Videodauer aufaddieren
+    //wenn noch nicht vorhanden
     if(!titles.contains(vref.id)){
+      //Videodauer aufaddieren
       if(duration == null) duration = v.duration
       else duration += v.duration
+      //Kommentare aufaddieren
+      comments += v.comments
     }
     add(vref)
   }
@@ -198,6 +206,8 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
       node.attr("checkbox", "true")
     if (duration != null)
       node.attr("duration", duration)
+    if (comments > 0)
+      node.attr("comments", comments)
     if (videos.size > 0)
       node.attr("videos", videos.size)
     
