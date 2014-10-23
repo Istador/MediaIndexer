@@ -33,8 +33,8 @@ object Video {
     val duration = node.attr("duration")
     if(duration != null) v.duration = duration.attr
     
-    val comments = node.attr("comments").attr
-    if(comments != null) v.comments = comments.toInt
+    val comments = node.attr("comments")
+    if(comments != null) v.comments = comments.attr.toInt
     
     for(file <- node.getChildNodes:NL){
       val url = file.attr("url").attr
@@ -50,14 +50,15 @@ object Video {
   
   private[this] var latestId:Int = xpath("/indexer[1]/videos[1]/@latest").attr.toInt
   
-  private[Video] def getID(url:String):Int = {
+  private[Video] def getID(url:String):(Int, Int) = {
     val node = xpath("/indexer[1]/videos[1]/video[@url='"+url+"']")
-    if(node.size == 1)
-      node.attr("id").attr.toInt
-    else{
+    if(node.size == 1){
+      val comments = node.attr("comments")
+      (node.attr("id").attr.toInt, if(comments==null) 0 else comments.attr.toInt) 
+    } else {
       this.synchronized{
     	latestId += 1
-    	latestId
+    	(latestId, 0)
       }
     }
   }
@@ -74,8 +75,17 @@ case class Video(val url: String) extends Iterable[VFile] {
   
   import de.blackpinguin.util.Dates._
   
+  //Anzahl Kommentare
+  var comments: Int = 0
+  
   //eindeutige ID
-  val id:Int = Video.getID(url)
+  val id = {
+    val tmp = Video.getID(url)
+    comments = tmp._2
+    tmp._1
+  }
+  
+  var commentsChanged: Int = 0
   
   //original Titel aus der Mediathek (kein substring)
   var title: String = null
@@ -87,9 +97,6 @@ case class Video(val url: String) extends Iterable[VFile] {
   
   //Dauer
   var duration: Duration = null
-  
-  //Anzahl Kommentare
-  var comments: Int = 0
   
   //Veroeffentlichungsdatum
   var pubDate: Date = null

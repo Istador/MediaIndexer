@@ -197,8 +197,16 @@ object Mediathek {
       
       //Hochladedatum
       video.pubDate = getText("video.pubDate")
+      
+      //Kommentaranzahl
+      
+      val old = video.comments
       video.comments = getText("video.comments").toInt
-      //println(getText("video.comments"))
+      //falls sich die Anzahl geändert hat
+      if(old != video.comments){
+        video.commentsChanged = video.comments - old
+      }
+      
 
       //für alle Videodateien
       getNodes("video.files").foreach { source =>

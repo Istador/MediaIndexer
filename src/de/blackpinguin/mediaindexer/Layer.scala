@@ -35,9 +35,7 @@ object Layer {
   def getLayer(name: String, cb: Boolean = false): Layer = 
   	RootLayer.getLayer(name, cb)
 
-  
-
-  
+    
   import XML.doc
   import de.blackpinguin.util.DOM._
   
@@ -173,8 +171,17 @@ class Layer(val parent: Option[Layer] = None, val name: String, val checkbox: Bo
       else duration += v.duration
       //Kommentare aufaddieren
       comments += v.comments
+    } else {
+    	//Kommentare aufaddieren
+    	comments += v.commentsChanged
+    	v.commentsChanged = 0
     }
     add(vref)
+  }
+  
+  def changeComments(diff: Int){
+    comments += diff
+    hasChanged
   }
   
   //enhält dieser Layer, oder eines deren Kinder, ein Video mit der ID?
