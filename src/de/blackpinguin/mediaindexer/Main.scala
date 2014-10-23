@@ -64,6 +64,7 @@ object Main {
     println("MediaIndexer -small\t\tsearch for new videos, abort on an old video.")
     println("MediaIndexer -smart\t\tgenerate the index again for old videos and make a small search.")
     println("MediaIndexer -full\t\tupdate all videos, keeping only the IDs.")
+    println("MediaIndexer -full n\t\tupdate all videos on the first n pages.")
     println("MediaIndexer -reset\t\tdelete videos.xml and search from last to first page.")
     println("MediaIndexer -xslt\t\tonly transforms videos.xml using the XSLT files")
     println("MediaIndexer -update URL\tupdate a single video")
