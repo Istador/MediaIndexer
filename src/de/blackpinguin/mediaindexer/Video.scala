@@ -25,16 +25,16 @@ object Video {
   //
   def fromXML(node: N):Video = {
     val v = Video( node.attr("url").attr )
-
-    
     
     v.title = node.attr("title").attr
     v.author = node.attr("author").attr
-    v.duration = node.attr("duration").attr
     v.pubDate = node.attr("pubdate").attr
     
-    val tmp = node.attr("comments").attr
-    v.comments = if(tmp != null) tmp.toInt else 0
+    val duration = node.attr("duration")
+    if(duration != null) v.duration = duration.attr
+    
+    val comments = node.attr("comments").attr
+    if(comments != null) v.comments = comments.toInt
     
     for(file <- node.getChildNodes:NL){
       val url = file.attr("url").attr

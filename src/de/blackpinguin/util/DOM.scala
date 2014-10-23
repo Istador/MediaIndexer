@@ -86,10 +86,8 @@ object DOM {
     
     def attr(key: String):N = {
       val atts = n.getAttributes()
-      if(atts == null) return N(null)
-      val item = atts.getNamedItem(key)
-      if(item == null) return N(null)
-      item
+      if(atts == null) null
+      atts.getNamedItem(key)
     }
     
     def apply(key: String):String = attr(key).attr
