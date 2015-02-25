@@ -33,7 +33,7 @@ details > div > div > span:nth-of-type(2) {
 }
 
 /* Anzahl Kommentare beim Layer */
-summary > span:nth-of-type(3) {
+summary > span:not(:first-of-type) {
 	color: red;
 	margin-left: 3px;
 }
