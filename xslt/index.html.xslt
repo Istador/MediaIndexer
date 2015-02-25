@@ -100,7 +100,7 @@
 		<input type="button" id="uncheck" value="auswahl aufheben"/>
 		<input type="button" id="reset" value="alles zurücksetzen"/>
 		</p>
-		<p>Diese Seite wurde zuletzt generiert <xsl:call-template name="str:replace">
+		<p>Diese Seite wurde zuletzt generiert am <xsl:call-template name="str:replace">
 			<xsl:with-param name="string" select="/indexer[1]/@gendate" />
 			<xsl:with-param name="search" select="' '" />
 			<xsl:with-param name="replace" select="' um '" />
