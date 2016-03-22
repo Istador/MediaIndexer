@@ -12,7 +12,7 @@ import de.blackpinguin.util.{Properties => Prop}
 import de.blackpinguin.util.DOM._
 
 object Mediathek {
-  
+
   Prop.addDefault(Map(
         ("domain", "http://mediathek.mt.haw-hamburg.de")
       , ("pages.url", "/media/list/component/boxList/filter/all/limit/all/layout/thumbBig/page/")
@@ -30,21 +30,21 @@ object Mediathek {
       , ("video.comments.xpath", "//div[@id='media_comments_list']/div[1]/div[1]/h2[1]")
       , ("video.comments.regex", "(\\d+) Kommentare")
   ))
-  
-  
-  private[this] var regexes = Map[String, Regex]() 
-  
+
+
+  private[this] var regexes = Map[String, Regex]()
+
   case class MatchException(regex: String, str: String) extends RuntimeException {
     override def getMessage: String = "Fehler: Regulärer Ausdruck '"+regex+"' matcht nicht auf '"+str+"'."
   }
-  
+
   def getText(property: String, node:N = null)(implicit doc: Document): String = {
     //String mittels XPath aus Document holen
     val prop = Prop(property+".xpath")
     val nl = if(node == null) xpath(prop) else node.xpath(prop)
     if(nl == null) return ""
     val str = nl.getTextContent
-    
+
     //schaue ob eine optionale regex Property exisitert
     Prop.get(property+".regex") match {
       case Some(value) =>
@@ -53,46 +53,46 @@ object Mediathek {
             regexes += property -> value.r
         }
         val r = regexes(property)
-        
+
         r.findFirstMatchIn(str) match {
           case Some(m) => m.group(1)
           case None => throw MatchException(value, str)
         }
-      case None => 
+      case None =>
         str
-    }    
+    }
   }
-  
-  
-  
-  def getNodes(property: String, node:N = null)(implicit doc: Document): NL = 
+
+
+
+  def getNodes(property: String, node:N = null)(implicit doc: Document): NL =
     if(node == null)
       xpath(Prop(property+".xpath"))
     else
       node.xpath(Prop(property+".xpath"))
-  
-  
-  
+
+
+
   val client = AsyncHTTP
-  
+
   val latestVideo = Video.latest
 
   type Cond = Video => Boolean
   lazy val aTrue: Any => Boolean = _ => true //immer wahr
   lazy val aFalse: Any => Boolean = _ => false //immer falsch
-  
+
   //von vorne, alle videos überprüfen ID's behalten
   def full = viewPages (aTrue) (aFalse) (1) (_+1) (aFalse)
-  
+
   //von vorne, alle videos überprüfen ID's behalten, bis zur Seite n
   def full(n: Int) = viewPages (aTrue) (aFalse) (1) (_+1) (_ >= n)
-  
+
   //von vorne, abbruch wenn bereits bekannt
   def small = viewPages (_.id > latestVideo) (_.id <= latestVideo) (1) (_+1) (aFalse)
-  
+
   //von hinten, alle videos überprüfen ID's behalten
   def backwards = viewPages (aTrue) (aFalse) (lastPageNumber) (_-1) (_ <= 0)
-  
+
   //lade die letzte Seite, und ermittel die Seitenzahl der Seite.
   def lastPageNumber: Long = {
     implicit val doc = result(client.getDOM(Prop("domain") + Prop("pages.url") + Long.MaxValue))
@@ -106,13 +106,13 @@ object Mediathek {
       else max
     }
   }
-  
+
   //von vorne, solange bis eine bestimmtes Video gefunden wird, nur dieses prüfen
   def update(url: String): Unit = {
       val cond:Cond = {v => url.equalsIgnoreCase(v.url)}
       viewPages (cond) (cond) (1) (_+1) (aFalse)
   }
-  
+
   //updaten anhand der ID
   def update(id: Int): Unit = {
     //hole die url für diese id
@@ -120,12 +120,12 @@ object Mediathek {
     if(node == null) println("Fehler: kann kein Video für die ID '"+id+"' finden.")
     else update( node.attr("url").attr )
   }
-  
-      
-  def hasPage(n: Long)(implicit doc: Document): Boolean = 
+
+
+  def hasPage(n: Long)(implicit doc: Document): Boolean =
     getNodes("pages").exists(_.attr.equals(Prop("pages.url")+n))
-  
-  
+
+
   def viewPages(examine: Cond)(abort: Cond)(firstPage: =>Long)(nextPage: Long=>Long)(lastPage: Long=>Boolean): Unit = {
       val videos = Coll[Future[Video]]()
       val future = examinePage(firstPage, videos)(examine)(abort)(nextPage)(lastPage)
@@ -143,7 +143,7 @@ object Mediathek {
 
       //alle <li>-Elemente parallel auswerten
       val vs = for (li <- getNodes("videos")) yield initVideo(li)
-      
+
       //für alle Videos
       for (fv <- vs){
         //warte auf das Future-Ergebnis
@@ -156,17 +156,17 @@ object Mediathek {
         if(!ende && abort(v))
           ende = true
       }
-          
+
       //existiert überhaupt eine weitere Seite?
       if(!ende && !lastPage(n) && hasPage(nextPage(n)))
         //nächste Seite laden
         waitFor(examinePage(nextPage(n), videos)(examine)(abort)(nextPage)(lastPage))
     }
   }
-  
-  
+
+
   //Eingabe Node: <li>
-  //hole Infos: url, title, duration 
+  //hole Infos: url, title, duration
   def initVideo(node: N)(implicit doc: Document): Future[Video] =
     Future {
 
@@ -178,40 +178,41 @@ object Mediathek {
 
       //Video-Autor
       v.author = getText("video.author", node)
-      
+
       //Video-Dauer
       v.duration = getText("video.duration", node)
-      
+
       v
     }
 
   //bekannt: url, title, duration
   //benoetigt: files, pubDate
-  def examineVideo(video: Video): Future[Video] = 
+  def examineVideo(video: Video): Future[Video] =
     for {
       doc <- client.getDOM(video.url)
     } yield {
       implicit val d = doc
 
       //println("Video " + video.title + " geladen.")
-      
+
       //Hochladedatum
       video.pubDate = getText("video.pubDate")
-      
+
       //Kommentaranzahl
-      
+
       val old = video.comments
       video.comments = getText("video.comments").toInt
       //falls sich die Anzahl geändert hat
       if(old != video.comments){
         video.commentsChanged = video.comments - old
       }
-      
+
 
       //für alle Videodateien
       getNodes("video.files").foreach { source =>
         //zum Video hinzufügen
-        video add VFile(Prop("domain") + source("src"), source("type"))
+        video add VFile(Prop("domain") + getText("video.file.url", source), getText("video.file.type", source))
+        //video add VFile(Prop("domain") + source("src"), source("type")) // old
       }
 
       //Video zu <videos> hinzufügen
@@ -219,18 +220,18 @@ object Mediathek {
 
       //layers ermitteln und zum <index> hinzufügen
       val addLayers = Future(ConfigEntry.layers(video))
-      
+
       waitFor(addToVideos)
       waitFor(addLayers)
-      
+
       video
     }
-  
-  
+
+
   //Umlaute im Titel ersetzen (sonst wird das & bei der Ausgabe zu &amp;)
   def fixUmlaute(in: String) = {
     StringEscapeUtils.unescapeHtml4(in)
   }
-  
- 
+
+
 }
