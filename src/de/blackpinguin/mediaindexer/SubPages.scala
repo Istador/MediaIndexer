@@ -15,7 +15,7 @@ object SubPages {
   
   //für einen einzelnen Layer das XML leicht verändern, und dann alle XSLT-Transformationen erzeugen
   def createLayer(lay: Layer, depth: Int, empty: Unit=>Document): Future[Unit] = Future {
-    implicit val doc = empty()
+    implicit val doc = empty(())
     val index: N = xpath("/indexer[1]/index[1]")
     val videos: N = xpath("/indexer[1]/videos[1]")
     
