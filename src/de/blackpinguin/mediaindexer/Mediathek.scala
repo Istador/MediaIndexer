@@ -24,7 +24,7 @@ object Mediathek {
       , ("video.duration.regex", "Dauer: ((\\d+:)?\\d{2}:\\d{2})")
       , ("video.pubDate.xpath", "//ul[@id='mediaInfo']/li[2]")
       , ("video.author.xpath", "./div[1]/p[1]/a")
-      , ("video.files.xpath", "//video[@id='index_video']//source")
+      , ("video.files.xpath", "//video[@id='index_video' or @id='p_playerContainer' or @id='p_video']//source")
       , ("video.file.url.xpath", "./@src")
       , ("video.file.type.xpath", "./@type")
       , ("video.comments.xpath", "//div[@id='media_comments_list']/div[1]/div[1]/h2[1]")
@@ -197,7 +197,7 @@ object Mediathek {
 
       //Hochladedatum
       video.pubDate = getText("video.pubDate")
-
+      
       //Kommentaranzahl
 
       val old = video.comments
@@ -206,13 +206,13 @@ object Mediathek {
       if(old != video.comments){
         video.commentsChanged = video.comments - old
       }
-
-
+      
       //für alle Videodateien
       getNodes("video.files").foreach { source =>
         //zum Video hinzufügen
-        video add VFile(Prop("domain") + getText("video.file.url", source), getText("video.file.type", source))
-        //video add VFile(Prop("domain") + source("src"), source("type")) // old
+        val path = getText("video.file.url", source)
+        val url = if (path(0) == '/') Prop("domain") + path else path
+        video add VFile(url, getText("video.file.type", source))
       }
 
       //Video zu <videos> hinzufügen
