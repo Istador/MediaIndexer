@@ -16,7 +16,7 @@ p {
 	margin: 10px 0px;
 }
 
-details, summary { display: block; }
+/*details, summary { display: block; }*/
 summary {cursor: pointer;}
 
 /* Add focus styles (for keyboard accessibility) */
@@ -93,7 +93,7 @@ header > a.xml {
 
 
 
-/* element, welches das eingebettete Video enth‰lt. */
+/* element, welches das eingebettete Video enth√§lt. */
 #videocont {
 	text-align: center;
 	background-color: white;
